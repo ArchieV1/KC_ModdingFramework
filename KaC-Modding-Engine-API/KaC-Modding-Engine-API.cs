@@ -44,33 +44,17 @@ namespace KaC_Modding_Engine_API
             var assembly = Assembly.GetExecutingAssembly();
             var harmony = HarmonyInstance.Create("uk.ArchieV.KaC-Modding-Engine-API");
             harmony.PatchAll(assembly);
+            
+            Inst = this;
+
+            _unassignedResourceTypes = Enum.GetValues(typeof(ResourceType)).Cast<ResourceType>().ToList();
         }
 
         public void PreScriptLoad(KCModHelper helper)
         {
             Helper = helper;
             Helper.Log("PreScriptLoad");
-        }
-
-        public void Preload(KCModHelper helper)
-        {
-            Helper = helper;
-            Helper.Log("Preload");
-        }
-
-        public void SceneLoaded(KCModHelper helper)
-        {
-            Helper = helper;
-            Helper.Log(("Scene loaded"));
-        }
-
-        public void Start()
-        {
-            Helper.Log($"Starting KaC-Modding-Engine-API at {DateTime.Now}");
-            Inst = this;
-
-            _unassignedResourceTypes = Enum.GetValues(typeof(ResourceType)).Cast<ResourceType>().ToList();
-
+            
             // Mark the default values as assigned (ironDeposit, stoneDeposit etc) 
             // Ignore intelliSense it CANNOT be a foreach loop as it will edit the list while it goes
             for (int x = 0; x < _unassignedResourceTypes.Count; x++)
@@ -95,26 +79,16 @@ namespace KaC_Modding_Engine_API
             }
 
             Helper.Log("Finished removing default ResourceTypes from _unassignedResourceTypes");
-
-            Helper.Log("Registering test mod:");
+            
             // BUNDLE NAME WILL BE LOWER CASE
-            // ASSET NAME DEPENDS ON THE MODDER (GoldDeposit in this case)
+            // ASSET NAME DEPENDS ON THE MODDER
+            // In this case: GoldDeposit (Shader) and golddeposit1 (Model)
             
             // These two will be supplied by the 3rd party mod
-            AssetBundle goldMinesAssetBundle = KCModHelper.LoadAssetBundle($"{Helper.modPath}", "golddeposit"); 
-            //GoldDeposit goldDeposit = new GoldDeposit("GoldDeposit");
-            GoldDeposit goldDeposit = new GoldDeposit("/Assets/KCAssets/GameMaterial/GoldDeposit.prefab");
-
-            if (goldMinesAssetBundle == null)
-            {
-                Helper.Log("GOLD MINES ASSET BUNDLE IS NULL");
-            }
-
-            if (goldDeposit.Model == null)
-            {
-                Helper.Log("GOLDDEPOSIT MODEL IS BLANK");
-            }
+            AssetBundle goldMinesAssetBundle = KCModHelper.LoadAssetBundle($"{Helper.modPath}", "golddeposit");
+            GoldDeposit goldDeposit = new GoldDeposit("assets/workspace/golddeposit1.prefab");
             
+            Helper.Log("Registering test mod: (Registering Generators and ResourceTypeBases)");
             ModConfig goldMinesMod = new ModConfig
             {
                 Author = "ArchieV1",
@@ -125,10 +99,30 @@ namespace KaC_Modding_Engine_API
                 }
             };
             
+            Helper.Log($"Gold mines asset bundle: {goldMinesAssetBundle}");
+            Helper.Log($"goldDeposit model exists: {goldDeposit.Model != null}");
+            
             RegisterMod(goldMinesMod);
             Helper.Log($"Test mod is registered: {goldMinesMod.Registered.ToString()}");
             
             LogDump();
+        }
+
+        public void Preload(KCModHelper helper)
+        {
+            Helper = helper;
+            Helper.Log("Preload");
+        }
+
+        public void SceneLoaded(KCModHelper helper)
+        {
+            Helper = helper;
+            Helper.Log(("Scene loaded"));
+        }
+
+        public void Start()
+        {
+            Helper.Log($"Starting KaC-Modding-Engine-API at {DateTime.Now}");
         }
 
         #endregion
@@ -414,7 +408,7 @@ namespace KaC_Modding_Engine_API
     public class ResourceTypeBase
     {
         public string AssetName;
-        public GameObject Model;
+        public GameObject Model; // Generator sets this
         public ResourceType ResourceType;
         
         public ResourceTypeBase(string assetName)
@@ -429,8 +423,6 @@ namespace KaC_Modding_Engine_API
         public readonly AssetBundle AssetBundle;
         public readonly ResourceTypeBase[] Resources; // The thing with .Generate()
         
-        public GameObject Model; // To appear on the map
-
         /// <summary>
         /// Create a ResourceTypeBase with multiple resources contained within it.
         /// Use this if generation code required multiple 
@@ -459,11 +451,13 @@ namespace KaC_Modding_Engine_API
             // Load all of the Models into the resources
             foreach (var resource in Resources)
             {
+                Main.Inst.Helper.Log($"Attempting to load {resource.AssetName} for {resource}");
                 resource.Model = AssetBundle.LoadAsset(resource.AssetName) as GameObject;
                 if (resource.Model == null)
                 {
                     success = false;
                 }
+                Main.Inst.Helper.Log($"Loaded model: {resource.Model != null}");
             }
 
             return success;
@@ -525,17 +519,11 @@ namespace KaC_Modding_Engine_API
         /// Runs after map has been generated and adds every resource with a Generate() method
         /// </summary>
         /// <param name="__instance"></param>
-        //[HarmonyPatch]
-        //[HarmonyPatch(typeof(World))]
-        //[HarmonyPatch("GenLand")]
         static void Postfix(ref World __instance)
         {
             KCModHelper helper = Main.Inst.Helper;
             
-            helper.Log($"Postfixing GenLand with seed: {__instance.seed.ToString()}");
-            helper.Log(__instance.darkStoneModel.name);
-            helper.Log(__instance.lightStoneModel.name);
-            helper.Log(__instance.ironStoneModel.name);
+            helper.Log($"POSTFIXING \"GenLand\" with seed: {__instance.seed.ToString()}");
 
             foreach (ModConfig modConfig in Main.Inst.ModConfigs)
             {
