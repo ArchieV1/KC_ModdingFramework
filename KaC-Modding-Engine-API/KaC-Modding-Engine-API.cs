@@ -3,8 +3,12 @@ using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Harmony;
+using JetBrains.Annotations;
+using Priority_Queue;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace KaC_Modding_Engine_API
 {
@@ -86,7 +90,8 @@ namespace KaC_Modding_Engine_API
             
             // These two will be supplied by the 3rd party mod
             AssetBundle goldMinesAssetBundle = KCModHelper.LoadAssetBundle($"{Helper.modPath}", "golddeposit");
-            GoldDeposit goldDeposit = new GoldDeposit("assets/workspace/golddeposit1.prefab");
+            GameObject goldDepositModel = goldMinesAssetBundle.LoadAsset("assets/workspace/golddeposit1.prefab") as GameObject;
+            GoldDeposit goldDeposit = new GoldDeposit(goldDepositModel);
             
             Helper.Log("Registering test mod: (Registering Generators and ResourceTypeBases)");
             ModConfig goldMinesMod = new ModConfig
@@ -95,7 +100,7 @@ namespace KaC_Modding_Engine_API
                 ModName = "GoldMines mod",
                 Generators = new GeneratorBase[]
                 {
-                    new GoldDepositGenerator("GoldDeposit_Generator", new ResourceTypeBase[]{ goldDeposit }, goldMinesAssetBundle), 
+                    new GoldDepositGenerator(new ResourceTypeBase[]{ goldDeposit }), 
                 }
             };
             
@@ -217,7 +222,7 @@ namespace KaC_Modding_Engine_API
         /// <param name="resourceType"></param>
         /// <param name="resourceTypeBase"></param>
         /// <returns>True if success</returns>
-        private bool AssignResourceTypeData(ResourceTypeBase resourceTypeBase, ResourceType resourceType)
+        public bool AssignResourceTypeData(ResourceTypeBase resourceTypeBase, ResourceType resourceType)
         {
             if (_unassignedResourceTypes.Contains(resourceType)
                 && !_assignedResourceTypes.ContainsValue(resourceType))
@@ -266,37 +271,7 @@ namespace KaC_Modding_Engine_API
         }
 
         #endregion
-
-        /// <summary>
-        /// Get the assigned resource types that have the given fieldName true
-        /// </summary>
-        /// <param name="generationType">The type of ResourceTypeGeneration generation</param>
-        /// <returns>A dictionary of Generators that have the given fieldName true.
-        /// Returns null if the given fieldName is invalid</returns>
-        /// <exception cref="ArgumentException">fieldName cannot be null</exception>
-        public Dictionary<ResourceTypeBase, ResourceType> GetResourceTypeByGenerationType(GenerationType generationType)
-        {
-            Dictionary<ResourceTypeBase, ResourceType> list = this._assignedResourceTypes;
-            string fieldName = generationType.ToString();
-            
-            if (fieldName.IsNull())
-            {
-                throw new ArgumentException("fieldName cannot be null");
-            }
-
-            var result = new Dictionary<ResourceTypeBase, ResourceType>();
-
-            var search = from x in list
-                where (bool) x.Key?.GetType().GetProperty(fieldName)?.GetValue(x, null) == true
-                select x;
-
-            foreach (var KeyValuePair in search)
-            {
-                result.Add(KeyValuePair);
-            }
-
-            return result;
-        }
+        
 
         /// <summary>
         /// Logs everything about Main
@@ -346,16 +321,15 @@ namespace KaC_Modding_Engine_API
     
     public class GoldDeposit : ResourceTypeBase
     {
-        public GoldDeposit(string assetName) : base(assetName)
+        public GoldDeposit(GameObject model) : base(model)
         {
         }
     }
 
     public class GoldDepositGenerator : GeneratorBase
     {
-        public GoldDepositGenerator(string name, ResourceTypeBase[] resourceTypeBases, AssetBundle assetBundle) : base(name, resourceTypeBases, assetBundle)
+        public GoldDepositGenerator(ResourceTypeBase[] resourceTypeBases) : base(resourceTypeBases)
         {
-            Console.WriteLine("Instatitated GoldDepositGenerator");
         }
 
         public override bool Generate(World world)
@@ -411,61 +385,38 @@ namespace KaC_Modding_Engine_API
         public GameObject Model; // Generator sets this
         public ResourceType ResourceType;
         
-        public ResourceTypeBase(string assetName)
+        public ResourceTypeBase(GameObject model)
         {
-            AssetName = assetName;
+            Model = model;
+            Main.Inst.Helper.Log($"Model for {GetType()} loaded: {Model != null}");
         }
     }
     
     public class GeneratorBase
     {
-        public string Name; // The name of this resource type
-        public readonly AssetBundle AssetBundle;
-        public readonly ResourceTypeBase[] Resources; // The thing with .Generate()
-        
+        public readonly string Name; // The name of this resource type
+        public readonly ResourceTypeBase[] Resources; // The resources to be used in .Generate()
+
         /// <summary>
         /// Create a ResourceTypeBase with multiple resources contained within it.
         /// Use this if generation code required multiple 
         /// </summary>
-        /// <param name="name">The name of the resource generatorBase (For logging)</param>
         /// <param name="resourceTypeBases">The list of resources this generatorBase will use</param>
-        /// <param name="assetBundle">The asset bundle all of the resource assets are located in</param>
-        public GeneratorBase(string name, ResourceTypeBase[] resourceTypeBases,AssetBundle assetBundle)
+        public GeneratorBase(ResourceTypeBase[] resourceTypeBases)
         {
-            Main.Inst.Helper.Log($"Creating GeneratorBase ({name}) from AssetBundle: {assetBundle}.\n" +
+            Main.Inst.Helper.Log($"Creating GeneratorBase ({GetType()}).\n" +
                                  $"It contains the resources:\n {resourceTypeBases.ToList().Join(null, "\n")}");
 
-            Name = name ?? "DEFAULT_NAME";
+            Name = GetType().ToString();
             Resources = resourceTypeBases;
-            AssetBundle = assetBundle;
 
-            bool loadedModels = AttemptLoadModels();
-
-            Main.Inst.Helper.Log($"Loaded models successfully: {loadedModels}");
             Main.Inst.Helper.Log($"Created {Name}");
         }
-
-        private bool AttemptLoadModels()
-        {
-            bool success = true;
-            // Load all of the Models into the resources
-            foreach (var resource in Resources)
-            {
-                Main.Inst.Helper.Log($"Attempting to load {resource.AssetName} for {resource}");
-                resource.Model = AssetBundle.LoadAsset(resource.AssetName) as GameObject;
-                if (resource.Model == null)
-                {
-                    success = false;
-                }
-                Main.Inst.Helper.Log($"Loaded model: {resource.Model != null}");
-            }
-
-            return success;
-        }
+        
         /// <summary>
         /// Generates the resources in this generatorBase into the, already generated, world.
         /// Look at World.GenLand() for or http://www.ArchieV.uk/GoldMines for examples
-        /// Please use World.inst.seed and SRand for randomness.
+        /// Please use World.inst.seed, SRand, and this.RandomStoneState for randomness.
         /// </summary>
         /// <param name="world"></param>
         /// <returns>Returns true if implemented</returns>
@@ -481,37 +432,148 @@ namespace KaC_Modding_Engine_API
         
         #region Useful Generation Methods
 
+        /* All private values from `World` recreated with the CORRECT VALUES
+         * The comment next to it is where is is set in World
+         * These are not common to all Generator classes. Edits here will not effect other Generator classes
+        */ 
+        
+        
+        /// <summary>
+        /// Sets many private values to what they are in the base `World` but are private so cannot be accessed with __instance
+        /// </summary>
+        /// <param name="width">this.width</param>
+        /// <param name="height">this.height</param>
+        /// <returns></returns>
+        private bool Setup(int width, int height)
+        {
+            try
+            {
+                // randomStoneState = new System.Random(1234567);
+                // gridWidth = width;
+                // gridHeight = height;
+                // cellData = new Cell[gridWidth * gridHeight];
+                // cellInfluenceData = new CellInfluence[gridWidth * gridHeight];
+                
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return false;
+            }
+        }
+        
+
         // Places a small amount of "type" at x/y with some unusable stone around it
         // PlaceSmallStoneFeature(int x, int y, ResourceType type)
-        
+
         // Places a large amount of "type" at x/y with some unusable stone around it
         // PlaceLargeStoneFeature(int x, int y, ResourceType type)
-        
+
         // Sets cell at x/y's type to be "type".
         // Deleted the trees at that location
         // Calls SetupStoneForCell(Cell cell) to instantiate the model
         // PlaceStone(int x, int y, ResourceType type)
-        
+
         // Instantiates the model and 
         // gameObject = UnityEngine.Object.Instantiate<GameObject>(CORRECT_MODEL); // Instantiate the mode
         // gameObject.GetComponent<MeshRenderer>().sharedMaterial = this.uniMaterial[0]; // Apply the mesh. Always [0]. What is uniMaterial
         // gameObject.transform.parent = this.resourceContainer.transform; // Smth to do with moving it relative to the parent but not in the world
         // SetupStoneForCell(Cell cell)
-        
+
         #endregion
     }
     
     /// <summary>
-    /// The different default ways a GeneratorBase can be generated
+    /// Use this Generator if you wish your modded resource to spawn like vanilla Stone does. Requires two resourceTypes
     /// </summary>
-    public enum GenerationType
+    public class StoneLikeGenerator : GeneratorBase
     {
-        Stone = 0,
-        Iron = 1,
-        Fish = 2,
-        Tree = 3,
+        public StoneLikeGenerator(ResourceTypeBase[] resourceTypeBases) : base(resourceTypeBases)
+        {
+        }
+
+        /// <summary>
+        /// Stone generation requires two resources.
+        /// A good resource and a dud resource. Can use vanilla resources for either. Just use their data in your ResourceTypeBase implementation
+        /// </summary>
+        /// <param name="world"></param>
+        /// <returns></returns>
+        public override bool Generate(World world)
+        {
+            if (Resources.Length <= 2)
+            {
+                return false;
+            }
+            // Do StoneLike generation
+
+
+            return base.Generate(world);
+        }
+    }
+
+    public class WoodLikeGenerator : GeneratorBase
+    {
+        public WoodLikeGenerator(ResourceTypeBase[] resourceTypeBases) : base(resourceTypeBases)
+        {
+        }
+
+        public override bool Generate(World world)
+        {
+            return base.Generate(world);
+        }
+    }
+
+    public class IronLikeGenerator : GeneratorBase
+    {
+        public IronLikeGenerator(ResourceTypeBase[] resourceTypeBases) : base(resourceTypeBases)
+        {
+        }
+
+        public override bool Generate(World world)
+        {
+            return base.Generate(world);
+        }
+    }
+
+    public class FishLikeGenerator : GeneratorBase
+    {
+        public FishLikeGenerator(ResourceTypeBase[] resourceTypeBases) : base(resourceTypeBases)
+        {
+        }
+
+        public override bool Generate(World world)
+        {
+            return base.Generate(world);
+        }
+    }
+
+    public class EmptyCaveLikeGenerator : GeneratorBase
+    {
+        public EmptyCaveLikeGenerator(ResourceTypeBase[] resourceTypeBases) : base(resourceTypeBases)
+        {
+        }
+
+        public override bool Generate(World world)
+        {
+            return base.Generate(world);
+        }
+    }
+
+    public class WitchHutLikeGenerator : GeneratorBase
+    {
+        public WitchHutLikeGenerator(ResourceTypeBase[] resourceTypeBases) : base(resourceTypeBases)
+        {
+        }
+
+        public override bool Generate(World world)
+        {
+            return base.Generate(world);
+        }
     }
     
+    
+
     [HarmonyPatch(typeof(World), "GenLand")]
     class GenLand_Patch
     {
