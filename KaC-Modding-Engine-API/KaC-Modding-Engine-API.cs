@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Harmony;
 using JetBrains.Annotations;
 using Priority_Queue;
@@ -91,7 +92,7 @@ namespace KaC_Modding_Engine_API
             // These two will be supplied by the 3rd party mod
             AssetBundle goldMinesAssetBundle = KCModHelper.LoadAssetBundle($"{Helper.modPath}", "golddeposit");
             GameObject goldDepositModel = goldMinesAssetBundle.LoadAsset("assets/workspace/golddeposit1.prefab") as GameObject;
-            GoldDeposit goldDeposit = new GoldDeposit(goldDepositModel);
+            ResourceTypeBase goldDeposit = new ResourceTypeBase("GoldDeposit", goldDepositModel);
             
             Helper.Log("Registering test mod: (Registering Generators and ResourceTypeBases)");
             ModConfig goldMinesMod = new ModConfig
@@ -100,7 +101,7 @@ namespace KaC_Modding_Engine_API
                 ModName = "GoldMines mod",
                 Generators = new GeneratorBase[]
                 {
-                    new GoldDepositGenerator(new ResourceTypeBase[]{ goldDeposit }), 
+                    new GoldDepositGenerator(new []{ goldDeposit }), 
                 }
             };
             
@@ -287,7 +288,7 @@ namespace KaC_Modding_Engine_API
             Helper.Log($"_assignedResourceTypes:");
             foreach (KeyValuePair<ResourceTypeBase, ResourceType> pair in _assignedResourceTypes)
             {
-                Helper.Log($"{pair.Key.AssetName, 20} | {pair.Value, 4}");
+                Helper.Log($"{pair.Key.Name, 20} | {pair.Value, 4}");
             }
 
             Helper.Log("_unassignedResourceTypes:");
@@ -319,13 +320,6 @@ namespace KaC_Modding_Engine_API
         }
     }
     
-    public class GoldDeposit : ResourceTypeBase
-    {
-        public GoldDeposit(GameObject model) : base(model)
-        {
-        }
-    }
-
     public class GoldDepositGenerator : GeneratorBase
     {
         public GoldDepositGenerator(ResourceTypeBase[] resourceTypeBases) : base(resourceTypeBases)
@@ -376,25 +370,34 @@ namespace KaC_Modding_Engine_API
         }
     }
     
-    /// <summary>
-    /// Base class for a modder to expand/implement with their new resource
-    /// </summary>
     public class ResourceTypeBase
     {
-        public string AssetName;
-        public GameObject Model; // Generator sets this
-        public ResourceType ResourceType;
+        public string Name;
+        public GameObject Model;
+        public ResourceType ResourceType; // Main.RegisterResource() assigns this
         
-        public ResourceTypeBase(GameObject model)
+        /// <summary>
+        /// The ResourceTypeBase to appear on the map.
+        /// Generated using a Generator which is part of a ModConfig
+        /// </summary>
+        /// <param name="name">The name of the ResourceTypeBase</param>
+        /// <param name="model">The model to be used on the map</param>
+        public ResourceTypeBase(string name, GameObject model)
         {
+            Name = name;
             Model = model;
-            Main.Inst.Helper.Log($"Model for {GetType()} loaded: {Model != null}");
+            Main.Inst.Helper.Log($"Model for {Name} loaded: {Model != null}");
+        }
+
+        public override string ToString()
+        {
+            return $"{Name} has model loaded: {Model != null}. ResourceType = {ResourceType}";
         }
     }
     
     public class GeneratorBase
     {
-        public readonly string Name; // The name of this resource type
+        public readonly string Name; // The name of this generator
         public readonly ResourceTypeBase[] Resources; // The resources to be used in .Generate()
 
         /// <summary>
@@ -407,7 +410,7 @@ namespace KaC_Modding_Engine_API
             Main.Inst.Helper.Log($"Creating GeneratorBase ({GetType()}).\n" +
                                  $"It contains the resources:\n {resourceTypeBases.ToList().Join(null, "\n")}");
 
-            Name = GetType().ToString();
+            Name = GetType().ToString(); // The name of the class derived from this
             Resources = resourceTypeBases;
 
             Main.Inst.Helper.Log($"Created {Name}");
@@ -429,41 +432,20 @@ namespace KaC_Modding_Engine_API
         {
             return $"Generator_{Name}";
         }
-        
-        #region Useful Generation Methods
 
-        /* All private values from `World` recreated with the CORRECT VALUES
-         * The comment next to it is where is is set in World
-         * These are not common to all Generator classes. Edits here will not effect other Generator classes
-        */ 
-        
-        
-        /// <summary>
-        /// Sets many private values to what they are in the base `World` but are private so cannot be accessed with __instance
-        /// </summary>
-        /// <param name="width">this.width</param>
-        /// <param name="height">this.height</param>
-        /// <returns></returns>
-        private bool Setup(int width, int height)
+        public string AllInfo()
         {
-            try
+            StringBuilder str = new StringBuilder($"Generator: {Name}");
+            str.Append("Resource Types:");
+            foreach (ResourceTypeBase x in Resources)
             {
-                // randomStoneState = new System.Random(1234567);
-                // gridWidth = width;
-                // gridHeight = height;
-                // cellData = new Cell[gridWidth * gridHeight];
-                // cellInfluenceData = new CellInfluence[gridWidth * gridHeight];
-                
-                return true;
+                str.Append($"{x}");
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                return false;
-            }
+            
+            return str.ToString();
         }
         
-
+        #region Useful Generation Methods
         // Places a small amount of "type" at x/y with some unusable stone around it
         // PlaceSmallStoneFeature(int x, int y, ResourceType type)
 
@@ -480,7 +462,6 @@ namespace KaC_Modding_Engine_API
         // gameObject.GetComponent<MeshRenderer>().sharedMaterial = this.uniMaterial[0]; // Apply the mesh. Always [0]. What is uniMaterial
         // gameObject.transform.parent = this.resourceContainer.transform; // Smth to do with moving it relative to the parent but not in the world
         // SetupStoneForCell(Cell cell)
-
         #endregion
     }
     
