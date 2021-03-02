@@ -1,15 +1,10 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text;
 using Harmony;
-using JetBrains.Annotations;
-using Priority_Queue;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace KaC_Modding_Engine_API
 {
@@ -60,7 +55,7 @@ namespace KaC_Modding_Engine_API
             Helper = helper;
             Helper.Log("PreScriptLoad");
             
-            // Mark the default values as assigned (ironDeposit, stoneDeposit etc) 
+            // Mark the default values as assigned (ironDeposit, stoneDeposit etc)
             // Ignore intelliSense it CANNOT be a foreach loop as it will edit the list while it goes
             for (int x = 0; x < _unassignedResourceTypes.Count; x++)
             {
@@ -328,43 +323,28 @@ namespace KaC_Modding_Engine_API
 
         public override bool Generate(World world)
         {
-            Console.WriteLine("Generating GoldDeposit"); 
-            
-            Cell cell;
-            try
-            {
-                cell = world.GetCellData(world.GridHeight - 3, world.GridHeight - 3);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Error getting cell");
-                Console.WriteLine(e);
-                return false;
-            }
-            
-            ResourceTypeBase goldDeposit = Resources[0];
+            Console.WriteLine("Generating GoldDeposit");
 
-            if (cell == null || goldDeposit == null)
+            for (int z = 0; z < world.GridHeight; z++)
             {
-                Console.WriteLine($"Cell: {cell}, GoldDeposit: {goldDeposit}");
-                return false;
+                for (int x = 0; x < world.GridWidth; x++)
+                {
+                    if (world.GetCellData(x, z).Type == ResourceType.Stone)
+                    {
+                        Main.Inst.Helper.Log($"{x}, {z} is stone");
+                        Cell cell = world.GetCellData(x, z);
+
+                        ClearCell(cell);
+                        TryPlaceResource(cell, Resources[0], deleteTrees: true, storePostGenerationType: true);
+                        
+                    }
+                    else
+                    {
+                        Main.Inst.Helper.Log($"{x}, {z} is not stone. It is {world.GetCellData(x, z).Type}");
+                    }
+                }
             }
-            cell.Type = goldDeposit.ResourceType;
-            cell.StorePostGenerationType();
-            TreeSystem.inst.DeleteTreesAt(cell);
-        
-            GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(goldDeposit.Model);
-            gameObject.transform.position = cell.Position;
             
-            //gameObject.transform.localScale = new Vector3(RANDOMISATION);
-            //gameObject.transform.Rotate(new Vector3(RANDOMISATION)); // 0 or 180 for Z axis
-
-            if (cell.Models == null)
-            {
-                cell.Models = new List<GameObject>();
-            }
-            cell.Models.Add(gameObject);
-
             Console.WriteLine("Finished generating GoldDeposit"); 
             return true;
         }
@@ -444,7 +424,54 @@ namespace KaC_Modding_Engine_API
             
             return str.ToString();
         }
-        
+
+        public bool TryPlaceResource(Cell cell, ResourceTypeBase resourceTypeBase,
+            bool storePostGenerationType = false,
+            bool deleteTrees = false,
+            Vector3 localScale = new Vector3(),
+            Vector3 rotate = new Vector3())
+        {
+
+            cell.Type = resourceTypeBase.ResourceType;
+            if (storePostGenerationType) cell.StorePostGenerationType();
+            if (deleteTrees) TreeSystem.inst.DeleteTreesAt(cell);
+            GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(resourceTypeBase.Model);
+            gameObject.transform.position = cell.Position;
+            gameObject.transform.localScale = localScale;
+            gameObject.transform.Rotate(rotate); // 0 or 180 for Z axis
+
+            if (cell.Models == null)
+            {
+                cell.Models = new List<GameObject>();
+            }
+            cell.Models.Add(gameObject);
+            
+            return true;
+        }
+
+        public bool ClearCell(Cell cell, bool clearCave = true)
+        {
+            for (int i = 0; i < cell.Models.Count; i++)
+            {
+                UnityEngine.Object.Destroy(cell.Models[i].gameObject);
+            }
+            cell.Models.Clear();
+
+            if (clearCave) ClearCaveAtCell(cell);
+            
+            return true;
+        }
+
+        public bool ClearCaveAtCell(Cell cell)
+        {
+            GameObject caveAt = World.inst.GetCaveAt(cell);
+            if (caveAt != null)
+            {
+                UnityEngine.Object.Destroy(caveAt);
+            }
+
+            return true;
+        }
         #region Useful Generation Methods
         // Places a small amount of "type" at x/y with some unusable stone around it
         // PlaceSmallStoneFeature(int x, int y, ResourceType type)
@@ -565,21 +592,25 @@ namespace KaC_Modding_Engine_API
         static void Postfix(ref World __instance)
         {
             KCModHelper helper = Main.Inst.Helper;
+            if (helper == null) return;
             
             helper.Log($"POSTFIXING \"GenLand\" with seed: {__instance.seed.ToString()}");
 
+            if (Main.Inst.ModConfigs == null) return;
             foreach (ModConfig modConfig in Main.Inst.ModConfigs)
             {
+                if (modConfig.Generators == null) continue;
                 helper.Log($"Mod {modConfig.ModName} contains {modConfig.Generators.Length} generators");
                 foreach (GeneratorBase generator in modConfig.Generators)
                 {
                     helper.Log($"Generator: {generator}");
                     helper.Log($"Contains:");
+                    if (generator.Resources == null) continue;
                     foreach (var resource in generator.Resources)
                     {
-                        helper.Log($"\t{resource.GetType()}");
+                        helper.Log($"\t{resource.Name}");
                     }
-                    
+
                     // Go and use this GeneratorBase's Generate method using its assigned ResourceTypes (AV00, AV01 etc)
                     bool implemented = false;
                     try
@@ -595,5 +626,69 @@ namespace KaC_Modding_Engine_API
                 }
             }
         }
+    }
+
+    [HarmonyPatch(typeof(World.WorldSaveData), "Unpack")]
+    class Unpack_Patch
+    {
+        /// <summary>
+        /// Unpack all of the modded ResourceTypes
+        /// </summary>
+        /// <param name="__result"></param>
+        static void Postfix()
+        {
+            return;
+            World world = new World();
+
+            Cell[] cellData = GetCellData(world);
+            
+            for (int i = 0; i < cellData.Length; i++)
+            {
+                Cell cell = cellData[i];
+                Console.WriteLine(cell);
+            }
+            
+            SetCellData(world, cellData);
+        }
+
+        private static Cell[] GetCellData(World world)
+        {
+            /*
+             * Emulates this from `World.Unpack(World w)`
+             * for (int i = 0; i < w.cellData.Length; i++)
+			 * {
+			 *     Cell cell = w.cellData[i];
+             * }
+             */
+            
+            Type type = typeof(World);
+            //object lateBound = Activator.CreateInstance(type); // late-binding??
+ 
+            PropertyInfo cellDataProperty = type.GetProperty("cellData");
+            return (Cell[]) cellDataProperty.GetValue(world, null);
+        }
+
+        private static void SetCellData(World world, Cell cell, int i)
+        {
+            Type type = typeof(World);
+            PropertyInfo cellDataProperty = type.GetProperty("cellData");
+
+            // Get a copy of cellData and edit it
+            Cell[] newCellData = GetCellData(world);
+            newCellData[i] = cell;
+            
+            // Set cellData to be the edited version
+            cellDataProperty.SetValue(world, cell, null);
+        }
+
+        private static void SetCellData(World world, Cell[] newCellData)
+        {
+            Type type = typeof(World);
+            PropertyInfo cellDataProperty = type.GetProperty("cellData");
+            
+            // Set cellData to be the edited version
+            cellDataProperty.SetValue(world, newCellData, null);
+        }
+        
     }
 }
