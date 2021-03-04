@@ -62,6 +62,7 @@ namespace KaC_Modding_Engine_API
         {
             Helper = helper;
             Helper.Log("PreScriptLoad");
+            Helper.Log($"Starting KaC-Modding-Engine-API at {DateTime.Now}");
             
             // Mark the default values as assigned (ironDeposit, stoneDeposit etc)
             // Ignore intelliSense it CANNOT be a foreach loop as it will edit the list while it goes
@@ -131,7 +132,7 @@ namespace KaC_Modding_Engine_API
 
         public void Start()
         {
-            Helper.Log($"Starting KaC-Modding-Engine-API at {DateTime.Now}");
+            Helper.Log("Start");
         }
 
         #endregion
@@ -274,6 +275,21 @@ namespace KaC_Modding_Engine_API
             return false;
         }
 
+        public ResourceTypeBase GetResourceTypeBase(ResourceType resourceType)
+        {
+            var key = _assignedResourceTypes.FirstOrDefault(x => x.Value == resourceType).Key;
+
+            try
+            {
+                var result = _assignedResourceTypes[key];
+                return key;
+            }
+            catch
+            {
+                throw new ArgumentException("There is no ResourceTypeBase for the given ResourceType");
+            }
+        }
+        
         #endregion
         
 
@@ -336,23 +352,28 @@ namespace KaC_Modding_Engine_API
             Console.WriteLine($"{this}");
             Resources.ForEach(x => Console.WriteLine(x));
             System.Random randomStoneState = WorldTools.GetRandomStoneState(world);
-
-            helper.Log("Generating GoldDeposit");
-
+            
             helper.Log("Populating list");
             // Populate list of cells to become GoldDeposits
-            int numDeposits = 250;
+            int numDeposits = world.GridWidth;
             Cell[] cells = new Cell[numDeposits];
-            for (int cell = 0; cell < cells.Length - 1; cell++)
+            
+            // for (int cell = 0; cell < cells.Length - 1; cell++)
+            // {
+            //     int x = SRand.Range(0, world.GridWidth, randomStoneState);
+            //     int z = SRand.Range(0, world.GridHeight, randomStoneState);
+            //     cells[cell] = world.GetCellData(x, z);
+            // }
+
+            for (int x = 0; x < world.GridWidth - 1; x++)
             {
-                int x = SRand.Range(0, world.GridWidth, randomStoneState);
-                int z = SRand.Range(0, world.GridHeight, randomStoneState);
-                cells[cell] = world.GetCellData(x, z);
+                cells[x] = world.GetCellData(x, 0);
             }
 
             helper.Log("Applying to cells");
             for (int cell = 0; cell < cells.Length - 1; cell++)
             {
+                helper.Log($"Doing cell {cell} / {cells.Length - 1}");
                 Cell currentCell = cells[cell];
 
                 helper.Log($"Clearing cell {currentCell.x}, {currentCell.z}");
@@ -368,9 +389,6 @@ namespace KaC_Modding_Engine_API
                     helper.Log($"Not placed");
                     helper.Log(e.ToString());
                 }
-                
-
-                
             }
             
             helper.Log("Finished generating GoldDeposit"); 
@@ -454,7 +472,7 @@ namespace KaC_Modding_Engine_API
             return str.ToString();
         }
 
-        protected static void TryPlaceResource(Cell cell, ResourceTypeBase resourceTypeBase,
+        public static void TryPlaceResource(Cell cell, ResourceTypeBase resourceTypeBase,
             bool storePostGenerationType = false,
             bool deleteTrees = false,
             Vector3 localScale = new Vector3(),
@@ -533,7 +551,7 @@ namespace KaC_Modding_Engine_API
         #endregion
     }
     
-    #region Defauly generators (NOT IMPLEMENTED)
+    #region Default generators (NOT IMPLEMENTED)
     /// <summary>
     /// Use this Generator if you wish your modded resource to spawn like vanilla Stone does. Requires two resourceTypes
     /// </summary>
@@ -624,8 +642,6 @@ namespace KaC_Modding_Engine_API
     
     #endregion
     
-    
-
     [HarmonyPatch(typeof(World), "GenLand")]
     class GenLand_Patch
     {
@@ -670,6 +686,7 @@ namespace KaC_Modding_Engine_API
                     helper.Log($"{(implemented ? "Used" : "Didn't use")} {generator}");
                 }
             }
+            helper.Log("Finished postfixing");
         }
     }
 
@@ -682,22 +699,62 @@ namespace KaC_Modding_Engine_API
         /// <param name="__result"></param>
         static void Postfix(ref World __result)
         {
-            KCModHelper helper = Main.Inst.Helper;
-            World world = __result;
-
-            Cell[] cellData = WorldTools.GetCellData(world);
-            
-            for (int i = 0; i < cellData.Length; i++)
+            try
             {
-                Cell cell = cellData[i];
-                //helper.Log($"Cell {i} is: {cell.Type}"); // Helper.Log is probably too slow for this
+                //TODO Determine if this is needed
+                KCModHelper helper = Main.Inst.Helper;
+                World world = __result;
+
+                helper.Log($"Patching \"Unpack\" with seed {__result.seed}");
+
+                // Create generator to be able to use it's methods
+                ResourceTypeBase[]
+                    resourceTypeBases = new ResourceTypeBase[256]; // 256 is max KaC modding engine installer does
+                foreach (var generatorBase in Main.Inst.ModConfigs.SelectMany(modConfig => modConfig.Generators))
+                {
+                    resourceTypeBases.AddRangeToArray(generatorBase.Resources);
+                }
+
+                GeneratorBase generator = new GeneratorBase(resourceTypeBases);
+
+
+                Cell[] cellData = WorldTools.GetCellData(world);
+                Cell.CellSaveData[] cellSaveData =
+                    (Cell.CellSaveData[]) WorldTools.GetPrivateWorldField(world, "cellSaveData");
+                bool hasDeepWater = false;
+
+                for (int i = 0; i < cellData.Length - 1; i++)
+                {
+                    Cell cell = cellData[i];
+                    int x = i % world.GridWidth;
+                    int z = i / world.GridWidth;
+
+                    // Setting the cell.type was done in the method before it this Postfix
+                    // It was set if needed for default resources in 
+                    if (Main.Inst.listOfDefaultResources.Contains(cell.Type)) continue;
+
+                    cell.Type = cellSaveData[i].type;
+
+                    helper.Log($"Cell {cell.x}, {cell.z} is: {cell.Type}");
+
+                    // This is the equivalent of World.SetupStoneForCell
+                    ResourceTypeBase currentResourceTypeBase = Main.Inst.GetResourceTypeBase(cell.Type);
+                    GeneratorBase.TryPlaceResource(cell, currentResourceTypeBase, deleteTrees: false,
+                        storePostGenerationType: true);
+
+                    helper.Log($"Set Cell to {currentResourceTypeBase}");
+                }
+
+                WorldTools.SetCellData(world, cellData);
             }
-            
-            WorldTools.SetCellData(world, cellData);
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
     }
 
-    class WorldTools
+    public static class WorldTools
     {
         public static Cell[] GetCellData(World world)
         {
@@ -739,7 +796,7 @@ namespace KaC_Modding_Engine_API
         }
 
         /// <summary>
-        /// Uses GetPrivateField to get randomStoneState from world
+        /// Uses GetPrivateWorldField to get randomStoneState from world
         /// </summary>
         /// <param name="world"></param>
         /// <returns>A copy of randomStoneState from the given world</returns>
@@ -747,7 +804,7 @@ namespace KaC_Modding_Engine_API
         {
             Console.WriteLine("Starting GetRandomStoneState");
             // Pretty sure this is always `new System.Random(1234567);`
-            System.Random result = (System.Random) GetPrivateField(world, "randomStoneState");
+            System.Random result = (System.Random) GetPrivateWorldField(world, "randomStoneState");
             Console.WriteLine("Got randomStoneState");
             return result;
             }
@@ -760,14 +817,19 @@ namespace KaC_Modding_Engine_API
         /// <param name="fieldIsStatic"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentException">Thrown if fieldName does not exist in the given context (Static/Instance)</exception>
-        public static object GetPrivateField(World world, string fieldName, bool fieldIsStatic = false)
+        public static object GetPrivateWorldField(World world, string fieldName, bool fieldIsStatic = false)
+        {
+            return GetPrivateField(world, fieldName, fieldIsStatic);
+        }
+
+        public static object GetPrivateField(object world, string fieldName, bool fieldIsStatic = false)
         {
             string exceptionString =
-                $"{fieldName} does not correspond to a private {(fieldIsStatic ? "static" : "instance")} field";
+                $"{fieldName} does not correspond to a private {(fieldIsStatic ? "static" : "instance")} field in {world}";
             object result;
             try
             {
-                Type type = typeof(World);
+                Type type = world.GetType();
 
                 FieldInfo fieldInfo = fieldIsStatic ? type.GetField(fieldName, BindingFlags.Static | BindingFlags.NonPublic) : type.GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
                 
@@ -839,7 +901,7 @@ namespace KaC_Modding_Engine_API
         }
     }
 
-    class PlacementFailedException : Exception
+    public class PlacementFailedException : Exception
     {
         public PlacementFailedException()
         {
