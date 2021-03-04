@@ -2,9 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
+using Assets.Code;
+using Crosstales.FB.Util;
 using Harmony;
+using JetBrains.Annotations;
+using Priority_Queue;
+using Steamworks;
 using UnityEngine;
+using UnityEngine.Events;
+using Valve.VR.InteractionSystem;
 
 namespace KaC_Modding_Engine_API
 {
@@ -178,7 +186,7 @@ namespace KaC_Modding_Engine_API
         /// <returns>False upon failure of at least one </returns>
         private bool RegisterGenerator(GeneratorBase generator)
         {
-            int succeeded = generator.Resources.Count(resourceTypeBase => RegisterResource(resourceTypeBase));
+            int succeeded = generator.Resources.Count(RegisterResource);
 
             return succeeded == generator.Resources.Length;
         }
@@ -195,7 +203,7 @@ namespace KaC_Modding_Engine_API
                 return false;
             }
 
-            return AssignResourceTypeDataAResourceType(resourceTypeBase);
+            return AssignResourceTypeBase(resourceTypeBase);
         }
 
         #region ResourceTypeAssigning
@@ -205,11 +213,11 @@ namespace KaC_Modding_Engine_API
         /// </summary>
         /// <param name="resourceTypeBase"></param>
         /// <returns></returns>
-        public bool AssignResourceTypeDataAResourceType(ResourceTypeBase resourceTypeBase)
+        public bool AssignResourceTypeBase(ResourceTypeBase resourceTypeBase)
         {
             ResourceType resourceType = _unassignedResourceTypes[0];
 
-            return AssignResourceTypeData(resourceTypeBase, resourceType);
+            return AssignResourceTypeBase(resourceTypeBase, resourceType);
         }
         
         /// <summary>
@@ -218,17 +226,17 @@ namespace KaC_Modding_Engine_API
         /// <param name="resourceType"></param>
         /// <param name="resourceTypeBase"></param>
         /// <returns>True if success</returns>
-        public bool AssignResourceTypeData(ResourceTypeBase resourceTypeBase, ResourceType resourceType)
+        public bool AssignResourceTypeBase(ResourceTypeBase resourceTypeBase, ResourceType resourceType)
         {
-            if (_unassignedResourceTypes.Contains(resourceType)
-                && !_assignedResourceTypes.ContainsValue(resourceType))
-            {
-                _unassignedResourceTypes.Remove(resourceType);
-                _assignedResourceTypes.Add(resourceTypeBase, resourceType);
-                return true;
-            }
+            if (!_unassignedResourceTypes.Contains(resourceType) ||
+                _assignedResourceTypes.ContainsValue(resourceType)) return false;
+            
+            _unassignedResourceTypes.Remove(resourceType);
+            _assignedResourceTypes.Add(resourceTypeBase, resourceType);
 
-            return false;
+            resourceTypeBase.ResourceType = resourceType;
+            
+            return true;
         }
 
         /// <summary>
@@ -323,29 +331,50 @@ namespace KaC_Modding_Engine_API
 
         public override bool Generate(World world)
         {
+            KCModHelper helper = Main.Inst.Helper;
             Console.WriteLine("Generating GoldDeposit");
+            Console.WriteLine($"{this}");
+            Resources.ForEach(x => Console.WriteLine(x));
+            System.Random randomStoneState = WorldTools.GetRandomStoneState(world);
 
-            for (int z = 0; z < world.GridHeight; z++)
+            helper.Log("Generating GoldDeposit");
+
+            helper.Log("Populating list");
+            // Populate list of cells to become GoldDeposits
+            int numDeposits = 250;
+            Cell[] cells = new Cell[numDeposits];
+            for (int cell = 0; cell < cells.Length - 1; cell++)
             {
-                for (int x = 0; x < world.GridWidth; x++)
-                {
-                    if (world.GetCellData(x, z).Type == ResourceType.Stone)
-                    {
-                        Main.Inst.Helper.Log($"{x}, {z} is stone");
-                        Cell cell = world.GetCellData(x, z);
+                int x = SRand.Range(0, world.GridWidth, randomStoneState);
+                int z = SRand.Range(0, world.GridHeight, randomStoneState);
+                cells[cell] = world.GetCellData(x, z);
+            }
 
-                        ClearCell(cell);
-                        TryPlaceResource(cell, Resources[0], deleteTrees: true, storePostGenerationType: true);
-                        
-                    }
-                    else
-                    {
-                        Main.Inst.Helper.Log($"{x}, {z} is not stone. It is {world.GetCellData(x, z).Type}");
-                    }
+            helper.Log("Applying to cells");
+            for (int cell = 0; cell < cells.Length - 1; cell++)
+            {
+                Cell currentCell = cells[cell];
+
+                helper.Log($"Clearing cell {currentCell.x}, {currentCell.z}");
+                ClearCell(currentCell, clearCave:true);
+                helper.Log($"Placing {Resources[0]} at {currentCell.x}, {currentCell.z}");
+                try
+                {
+                    TryPlaceResource(currentCell, Resources[0], deleteTrees: true, storePostGenerationType: true);
+                    helper.Log($"Placed");
                 }
+                catch (Exception e)
+                {
+                    helper.Log($"Not placed");
+                    helper.Log(e.ToString());
+                }
+                
+
+                
             }
             
-            Console.WriteLine("Finished generating GoldDeposit"); 
+            helper.Log("Finished generating GoldDeposit"); 
+            Console.WriteLine("Finished generating GoldDeposit");
             return true;
         }
     }
@@ -371,7 +400,7 @@ namespace KaC_Modding_Engine_API
 
         public override string ToString()
         {
-            return $"{Name} has model loaded: {Model != null}. ResourceType = {ResourceType}";
+            return $"{Name}; Model loaded: {Model != null}; ResourceType = {ResourceType}";
         }
     }
     
@@ -410,7 +439,7 @@ namespace KaC_Modding_Engine_API
 
         public override string ToString()
         {
-            return $"Generator_{Name}";
+            return $"{Name}";
         }
 
         public string AllInfo()
@@ -425,44 +454,55 @@ namespace KaC_Modding_Engine_API
             return str.ToString();
         }
 
-        public bool TryPlaceResource(Cell cell, ResourceTypeBase resourceTypeBase,
+        protected static void TryPlaceResource(Cell cell, ResourceTypeBase resourceTypeBase,
             bool storePostGenerationType = false,
             bool deleteTrees = false,
             Vector3 localScale = new Vector3(),
             Vector3 rotate = new Vector3())
         {
-
-            cell.Type = resourceTypeBase.ResourceType;
-            if (storePostGenerationType) cell.StorePostGenerationType();
-            if (deleteTrees) TreeSystem.inst.DeleteTreesAt(cell);
-            GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(resourceTypeBase.Model);
-            gameObject.transform.position = cell.Position;
-            gameObject.transform.localScale = localScale;
-            gameObject.transform.Rotate(rotate); // 0 or 180 for Z axis
-
-            if (cell.Models == null)
+            try
             {
-                cell.Models = new List<GameObject>();
+                cell.Type = resourceTypeBase.ResourceType;
+                GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(resourceTypeBase.Model);
+
+                if (storePostGenerationType) cell.StorePostGenerationType();
+                if (deleteTrees) TreeSystem.inst.DeleteTreesAt(cell);
+
+                gameObject.transform.position = cell.Position;
+                if (localScale != new Vector3()) gameObject.transform.localScale = localScale;
+                if (rotate != new Vector3()) gameObject.transform.Rotate(rotate); // 0 or 180 for Z axis
+
+                if (cell.Models == null)
+                {
+                    cell.Models = new List<GameObject>();
+                }
+
+                cell.Models.Add(gameObject);
             }
-            cell.Models.Add(gameObject);
-            
-            return true;
+            catch (Exception e)
+            {
+                throw new PlacementFailedException(e.ToString());
+            }
         }
 
-        public bool ClearCell(Cell cell, bool clearCave = true)
+        protected static bool ClearCell(Cell cell, bool clearCave = true)
         {
-            for (int i = 0; i < cell.Models.Count; i++)
+            if (cell.Models != null)
             {
-                UnityEngine.Object.Destroy(cell.Models[i].gameObject);
-            }
-            cell.Models.Clear();
+                foreach (GameObject model in cell.Models)
+                {
+                    UnityEngine.Object.Destroy(model.gameObject);
+                }
 
+                cell.Models.Clear();
+            }
+            
             if (clearCave) ClearCaveAtCell(cell);
             
             return true;
         }
 
-        public bool ClearCaveAtCell(Cell cell)
+        protected static bool ClearCaveAtCell(Cell cell)
         {
             GameObject caveAt = World.inst.GetCaveAt(cell);
             if (caveAt != null)
@@ -472,6 +512,7 @@ namespace KaC_Modding_Engine_API
 
             return true;
         }
+        
         #region Useful Generation Methods
         // Places a small amount of "type" at x/y with some unusable stone around it
         // PlaceSmallStoneFeature(int x, int y, ResourceType type)
@@ -492,6 +533,7 @@ namespace KaC_Modding_Engine_API
         #endregion
     }
     
+    #region Defauly generators (NOT IMPLEMENTED)
     /// <summary>
     /// Use this Generator if you wish your modded resource to spawn like vanilla Stone does. Requires two resourceTypes
     /// </summary>
@@ -580,6 +622,8 @@ namespace KaC_Modding_Engine_API
         }
     }
     
+    #endregion
+    
     
 
     [HarmonyPatch(typeof(World), "GenLand")]
@@ -617,9 +661,10 @@ namespace KaC_Modding_Engine_API
                     {
                         implemented = generator.Generate(__instance);
                     }
-                    catch
+                    catch (Exception e)
                     {
-                        Main.Inst.Helper.Log($"Failed to generate: {generator}");
+                        helper.Log(e.ToString());
+                        helper.Log($"Failed to generate: {generator}");
                     }
 
                     helper.Log($"{(implemented ? "Used" : "Didn't use")} {generator}");
@@ -635,23 +680,26 @@ namespace KaC_Modding_Engine_API
         /// Unpack all of the modded ResourceTypes
         /// </summary>
         /// <param name="__result"></param>
-        static void Postfix()
+        static void Postfix(ref World __result)
         {
-            return;
-            World world = new World();
+            KCModHelper helper = Main.Inst.Helper;
+            World world = __result;
 
-            Cell[] cellData = GetCellData(world);
+            Cell[] cellData = WorldTools.GetCellData(world);
             
             for (int i = 0; i < cellData.Length; i++)
             {
                 Cell cell = cellData[i];
-                Console.WriteLine(cell);
+                //helper.Log($"Cell {i} is: {cell.Type}"); // Helper.Log is probably too slow for this
             }
             
-            SetCellData(world, cellData);
+            WorldTools.SetCellData(world, cellData);
         }
+    }
 
-        private static Cell[] GetCellData(World world)
+    class WorldTools
+    {
+        public static Cell[] GetCellData(World world)
         {
             /*
              * Emulates this from `World.Unpack(World w)`
@@ -668,7 +716,7 @@ namespace KaC_Modding_Engine_API
             return (Cell[]) cellDataProperty.GetValue(world, null);
         }
 
-        private static void SetCellData(World world, Cell cell, int i)
+        public static void SetCellData(World world, Cell cell, int i)
         {
             Type type = typeof(World);
             PropertyInfo cellDataProperty = type.GetProperty("cellData");
@@ -681,7 +729,7 @@ namespace KaC_Modding_Engine_API
             cellDataProperty.SetValue(world, cell, null);
         }
 
-        private static void SetCellData(World world, Cell[] newCellData)
+        public static void SetCellData(World world, Cell[] newCellData)
         {
             Type type = typeof(World);
             PropertyInfo cellDataProperty = type.GetProperty("cellData");
@@ -689,6 +737,124 @@ namespace KaC_Modding_Engine_API
             // Set cellData to be the edited version
             cellDataProperty.SetValue(world, newCellData, null);
         }
-        
+
+        /// <summary>
+        /// Uses GetPrivateField to get randomStoneState from world
+        /// </summary>
+        /// <param name="world"></param>
+        /// <returns>A copy of randomStoneState from the given world</returns>
+        public static System.Random GetRandomStoneState(World world)
+        {
+            Console.WriteLine("Starting GetRandomStoneState");
+            // Pretty sure this is always `new System.Random(1234567);`
+            System.Random result = (System.Random) GetPrivateField(world, "randomStoneState");
+            Console.WriteLine("Got randomStoneState");
+            return result;
+            }
+
+        /// <summary>
+        /// Gets a private field from a given World instance with the given FieldName
+        /// </summary>
+        /// <param name="world"></param>
+        /// <param name="fieldName"></param>
+        /// <param name="fieldIsStatic"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException">Thrown if fieldName does not exist in the given context (Static/Instance)</exception>
+        public static object GetPrivateField(World world, string fieldName, bool fieldIsStatic = false)
+        {
+            string exceptionString =
+                $"{fieldName} does not correspond to a private {(fieldIsStatic ? "static" : "instance")} field";
+            object result;
+            try
+            {
+                Type type = typeof(World);
+
+                FieldInfo fieldInfo = fieldIsStatic ? type.GetField(fieldName, BindingFlags.Static | BindingFlags.NonPublic) : type.GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+                
+                if (fieldInfo == null) throw new ArgumentException(exceptionString);
+                
+                result = fieldInfo.GetValue(world);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw new ArgumentException(exceptionString);
+            }
+
+            return result;
+        }
+    }
+
+    public class WorldFields
+    {
+        // Private fields World has
+        public CellInfluence[] cellInfluenceData;
+        public Cell[] cellData;
+        public Timer screenshotTimer = new Timer(10f);
+        //public int gridWidth;
+        //public int gridHeight;
+        public SimplePriorityQueue<Cell> findQueue = new SimplePriorityQueue<Cell>();
+        public static int bridgeHash = "bridge".GetHashCode(); 
+        public static int drawbridgeHash = "drawbridge".GetHashCode();
+        public System.Random randomStoneState;
+        public int frameToWaitBeforeSeen = 5;
+        public List<GameObject> stoneList = new List<GameObject>();
+        public List<CombineInstance> combineList = new List<CombineInstance>();
+        public List<Cell> stoneGrowList = new List<Cell>();
+        public bool placedCavesWitches;
+        //public List<LandmassStartInfo> landmassStartInfo = new List<World.LandmassStartInfo>(); // Can't be done as private class
+        public ArrayExt<Villager> emptyVillagerList = new ArrayExt<Villager>(0);
+        public ArrayExt<ArrayExt<Villager>> villagersPerLandMass = new ArrayExt<ArrayExt<Villager>>(10);
+        public bool regenRimCells;
+        public int framesAfterGenerate;
+        public string screenieSavePath = string.Empty;
+        public UnityAction onScreenshotComplete;
+        public Vector3[] cardinalOffsets = new Vector3[]
+        {
+            new Vector3(1f, 0f, 0f),
+            new Vector3(-1f, 0f, 0f),
+            new Vector3(0f, 0f, 1f),
+            new Vector3(0f, 0f, -1f)
+        };
+        public Cell[] scratchNeighbors = new Cell[8];
+        public Cell[] scratchNeighborsExtendedPlus = new Cell[12];
+        public int stonebridgeHash = "stonebridge".GetHashCode();
+        public static int stockpileHash = "stockpile".GetHashCode();
+        public Vector3[] cellBoundOffsets = new Vector3[]
+        {
+            Vector3.zero,
+            Vector3.forward,
+            new Vector3(1f, 0f, 1f),
+            Vector3.right
+        };
+        public TreeGrowth treeGrowth;
+        public int numLandMasses;
+            
+        /// <summary>
+        /// Contains all of the private fields for a given world
+        /// </summary>
+        public WorldFields()
+        {
+            
+        }
+    }
+
+    class PlacementFailedException : Exception
+    {
+        public PlacementFailedException()
+        {
+        }
+
+        public PlacementFailedException(string message) : base(message)
+        {
+        }
+
+        public PlacementFailedException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
+        protected PlacementFailedException([NotNull] SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
     }
 }
