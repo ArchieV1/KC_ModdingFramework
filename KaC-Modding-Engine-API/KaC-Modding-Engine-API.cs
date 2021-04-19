@@ -1,17 +1,18 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
-using Assets.Code;
-using Crosstales.FB.Util;
 using Harmony;
 using JetBrains.Annotations;
 using Priority_Queue;
-using Steamworks;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Experimental.PlayerLoop;
 using Valve.VR.InteractionSystem;
 
 namespace KaC_Modding_Engine_API
@@ -19,10 +20,9 @@ namespace KaC_Modding_Engine_API
     public class Main : MonoBehaviour
     {
         public KCModHelper Helper { get; private set; }
-        public static Main Inst;
+        public static Main Inst { get; private set; }
 
         public const int NumberDefaultResources = 9;
-
         public ResourceType[] listOfDefaultResources =
         {
             ResourceType.None,
@@ -41,8 +41,13 @@ namespace KaC_Modding_Engine_API
         private Dictionary<ResourceTypeBase, ResourceType> _assignedResourceTypes = new Dictionary<ResourceTypeBase, ResourceType>();
         
         // List of modConfigs
-        public List<ModConfig> ModConfigs = new List<ModConfig>();
+        public List<ModConfigME> ModConfigs = new List<ModConfigME>();
 
+        // For mod registering
+        private IMCPort port;
+        public List<ModConfigME> ModConfigMEs;
+        public static event Action Init;
+        
         #region Initialisation
 
         // Initial order goes #ctor > PreScriptLoad > Preload > SceneLoaded > Start
@@ -58,12 +63,12 @@ namespace KaC_Modding_Engine_API
             _unassignedResourceTypes = Enum.GetValues(typeof(ResourceType)).Cast<ResourceType>().ToList();
         }
 
-        public void PreScriptLoad(KCModHelper helper)
+        public void Preload(KCModHelper helper)
         {
             Helper = helper;
-            Helper.Log("PreScriptLoad");
             Helper.Log($"Starting KaC-Modding-Engine-API at {DateTime.Now}");
-            
+            Helper.Log($"===============Preload===============");
+
             // Mark the default values as assigned (ironDeposit, stoneDeposit etc)
             // Ignore intelliSense it CANNOT be a foreach loop as it will edit the list while it goes
             for (int x = 0; x < _unassignedResourceTypes.Count; x++)
@@ -86,69 +91,68 @@ namespace KaC_Modding_Engine_API
                     }
                 }
             }
-
             Helper.Log("Finished removing default ResourceTypes from _unassignedResourceTypes");
             
-            // BUNDLE NAME WILL BE LOWER CASE
-            // ASSET NAME DEPENDS ON THE MODDER
-            // In this case: GoldDeposit (Shader) and golddeposit1 (Model)
             
-            // These two will be supplied by the 3rd party mod
-            AssetBundle goldMinesAssetBundle = KCModHelper.LoadAssetBundle($"{Helper.modPath}", "golddeposit");
-            GameObject goldDepositModel = goldMinesAssetBundle.LoadAsset("assets/workspace/golddeposit1.prefab") as GameObject;
-            ResourceTypeBase goldDeposit = new ResourceTypeBase("GoldDeposit", goldDepositModel);
-            
-            Helper.Log("Registering test mod: (Registering Generators and ResourceTypeBases)");
-            ModConfig goldMinesMod = new ModConfig
-            {
-                Author = "ArchieV1",
-                ModName = "GoldMines mod",
-                Generators = new GeneratorBase[]
-                {
-                    new GoldDepositGenerator(new []{ goldDeposit }), 
-                }
-            };
-            
-            Helper.Log($"Gold mines asset bundle: {goldMinesAssetBundle}");
-            Helper.Log($"goldDeposit model exists: {goldDeposit.Model != null}");
-            
-            RegisterMod(goldMinesMod);
-            Helper.Log($"Test mod is registered: {goldMinesMod.Registered.ToString()}");
             
             LogDump();
         }
-
-        public void Preload(KCModHelper helper)
+        
+        public void PreScriptLoad(KCModHelper helper)
         {
             Helper = helper;
-            Helper.Log("Preload");
+            Helper.Log($"===============PreScriptLoad===============");
         }
 
         public void SceneLoaded(KCModHelper helper)
         {
+            // Register mods here
             Helper = helper;
-            Helper.Log(("Scene loaded"));
+            Helper.Log(($"===============Scene loaded==============="));
         }
 
         public void Start()
         {
-            Helper.Log("Start");
-        }
+            Helper.Log($"===============Start===============");
+            // For mod registering
+            
+            //transform.name = ModdingEngineNames.Objects.ModMenuName;
+            port = gameObject.AddComponent<IMCPort>();
 
+            Inst = this; // Think this is done elsewhere as well. Remove one
+            
+            // if (gameObject.name != ModdingEngineNames.Objects.ModMenuName)
+            //     Debugging.Log("ModMenu", $"{nameof(Main)} is attached to \"{gameObject.name}\" instead of \"{ModdingEngineNames.Objects.ModMenuName}\"!");
+            //
+            // port.RegisterReceiveListener<ModConfigME>(ModdingEngineNames.Methods.RegisterMod, RegisterModHandler);
+        }
+        
         #endregion
+
+        private void RegisterModHandler(IRequestHandler handler, string source, ModConfigME mod)
+        {
+            try
+            {
+                RegisterMod(mod);
+            }
+            catch (Exception e)
+            {
+                handler.SendError(port.gameObject.name, e);
+            }
+        }
 
         /// <summary>
         /// Registers the given mod. Changes "Registered" to true (Even if it failed to register the mod in its entirety
         /// </summary>
-        /// <param name="modConfig"></param>
+        /// <param name="modConfigMe"></param>
         /// <returns>Returns false if failed to register mod in its entirety</returns>
-        public bool RegisterMod(ModConfig modConfig)
+        public ModConfigME RegisterMod(ModConfigME modConfigMe)
         {
-            Helper.Log($"Registering {modConfig.ModName} by {modConfig.Author}...");
+            Helper.Log($"Registering {modConfigMe.ModName} by {modConfigMe.Author}...");
             int numGeneratorsRegistered = 0;
 
             // Assigns each GeneratorBase an unassignedResourceType
-            foreach (GeneratorBase generator in modConfig.Generators)
+            foreach (GeneratorBase generator in modConfigMe.Generators)
             {
                 bool success = RegisterGenerator(generator);
                 if (success)
@@ -162,22 +166,22 @@ namespace KaC_Modding_Engine_API
                 }
             }
             
-            modConfig.Registered = true;
-            if (modConfig.Generators.Length != numGeneratorsRegistered)
+            modConfigMe.Registered = true;
+            if (modConfigMe.Generators.Length != numGeneratorsRegistered)
             {
-                Helper.Log($"Failed to register {modConfig.ModName} by {modConfig.Author}.\n" +
+                Helper.Log($"Failed to register {modConfigMe.ModName} by {modConfigMe.Author}.\n" +
                            $"Registered {numGeneratorsRegistered} generators.\n" +
-                           $"Failed to register {modConfig.Generators.Length - numGeneratorsRegistered} generators.");
-                
-                return false;
+                           $"Failed to register {modConfigMe.Generators.Length - numGeneratorsRegistered} generators.");
+                throw new Exception("Failed to register mod");
             }
             else
             {
-                Helper.Log($"Registered {modConfig.ModName} by {modConfig.Author} successfully!\n" +
+                Helper.Log($"Registered {modConfigMe.ModName} by {modConfigMe.Author} successfully!\n" +
                            $"Registered {numGeneratorsRegistered} generators.");
-                ModConfigs.Add(modConfig);
-                return true;
+                ModConfigs.Add(modConfigMe);
             }
+
+            return modConfigMe;
         }
 
         /// <summary>
@@ -187,9 +191,8 @@ namespace KaC_Modding_Engine_API
         /// <returns>False upon failure of at least one </returns>
         private bool RegisterGenerator(GeneratorBase generator)
         {
-            int succeeded = generator.Resources.Count(RegisterResource);
-
-            return succeeded == generator.Resources.Length;
+            Helper.Log($"Registering generator {generator.Name}");
+            return generator.Resources.Length == generator.Resources.Count(resourceTypeBase => RegisterResource(resourceTypeBase));
         }
 
         /// <summary>
@@ -199,6 +202,7 @@ namespace KaC_Modding_Engine_API
         /// <returns></returns>
         private bool RegisterResource(ResourceTypeBase resourceTypeBase)
         {
+            Helper.Log($"Registering resourceTypeBase {resourceTypeBase}");
             if (_unassignedResourceTypes.IsNull() || _unassignedResourceTypes.Count == 0)
             {
                 return false;
@@ -214,7 +218,7 @@ namespace KaC_Modding_Engine_API
         /// </summary>
         /// <param name="resourceTypeBase"></param>
         /// <returns></returns>
-        public bool AssignResourceTypeBase(ResourceTypeBase resourceTypeBase)
+        private bool AssignResourceTypeBase(ResourceTypeBase resourceTypeBase)
         {
             ResourceType resourceType = _unassignedResourceTypes[0];
 
@@ -227,15 +231,21 @@ namespace KaC_Modding_Engine_API
         /// <param name="resourceType"></param>
         /// <param name="resourceTypeBase"></param>
         /// <returns>True if success</returns>
-        public bool AssignResourceTypeBase(ResourceTypeBase resourceTypeBase, ResourceType resourceType)
+        private bool AssignResourceTypeBase(ResourceTypeBase resourceTypeBase, ResourceType resourceType)
         {
             if (!_unassignedResourceTypes.Contains(resourceType) ||
-                _assignedResourceTypes.ContainsValue(resourceType)) return false;
+                _assignedResourceTypes.ContainsValue(resourceType))
+            {
+                Helper.Log($"DIDNT ASSIGN {resourceTypeBase.Name} resourceType: {resourceTypeBase.ResourceType}");
+                return false;
+            }
             
             _unassignedResourceTypes.Remove(resourceType);
             _assignedResourceTypes.Add(resourceTypeBase, resourceType);
 
             resourceTypeBase.ResourceType = resourceType;
+
+            Helper.Log($"Assigned {resourceTypeBase.Name} resourceType: {resourceTypeBase.ResourceType}");
             
             return true;
         }
@@ -243,6 +253,7 @@ namespace KaC_Modding_Engine_API
         /// <summary>
         /// Removes resourceType from _assignedResourceTypes and Adds resourceType to _unassignedResourceTypes
         /// </summary>
+        /// <param name="resourceTypeBase"></param>
         /// <param name="resourceType"></param>
         /// <param name="base"></param>
         /// <returns>True if success</returns>
@@ -266,32 +277,43 @@ namespace KaC_Modding_Engine_API
         /// <returns></returns>
         private bool MarkResourceTypeAssigned(ResourceType resourceType)
         {
-            if (_unassignedResourceTypes.Contains(resourceType))
-            {
-                _unassignedResourceTypes.Remove(resourceType);
-                return true;
-            }
-
-            return false;
+            if (!_unassignedResourceTypes.Contains(resourceType)) return false;
+            
+            _unassignedResourceTypes.Remove(resourceType);
+            return true;
         }
 
         public ResourceTypeBase GetResourceTypeBase(ResourceType resourceType)
         {
-            var key = _assignedResourceTypes.FirstOrDefault(x => x.Value == resourceType).Key;
+            ResourceTypeBase key = _assignedResourceTypes.FirstOrDefault(x => x.Value == resourceType).Key;
 
-            try
-            {
-                var result = _assignedResourceTypes[key];
-                return key;
-            }
-            catch
+            if (key == null)
             {
                 throw new ArgumentException("There is no ResourceTypeBase for the given ResourceType");
             }
+
+            return key;
         }
         
         #endregion
-        
+
+        /// <summary>
+        /// Returns an array of Methods above the current in the stack
+        /// </summary>
+        /// <returns></returns>
+        [STAThread]
+        public static IEnumerable<string> GetCallingMethods()
+        {
+            StackTrace stackTrace = new StackTrace();
+            StackFrame[] stackFrames = stackTrace.GetFrames();
+
+            var list = new List<string>();
+            if (stackFrames == null) return list;
+            list.AddRange(stackFrames.Select(frame => frame.GetMethod().Name));
+            list.Remove(stackFrames[0].GetMethod().Name);
+            
+            return list;
+        }
 
         /// <summary>
         /// Logs everything about Main
@@ -321,7 +343,7 @@ namespace KaC_Modding_Engine_API
         }
     }
     
-    public class ModConfig
+    public class ModConfigME
     {
         public string ModName;
         public string Author;
@@ -329,7 +351,7 @@ namespace KaC_Modding_Engine_API
 
         public bool Registered = false;
         
-        public ModConfig(){}
+        public ModConfigME(){}
 
         public override string ToString()
         {
@@ -373,26 +395,21 @@ namespace KaC_Modding_Engine_API
             helper.Log("Applying to cells");
             for (int cell = 0; cell < cells.Length - 1; cell++)
             {
-                helper.Log($"Doing cell {cell} / {cells.Length - 1}");
                 Cell currentCell = cells[cell];
-
-                helper.Log($"Clearing cell {currentCell.x}, {currentCell.z}");
+                
                 ClearCell(currentCell, clearCave:true);
-                helper.Log($"Placing {Resources[0]} at {currentCell.x}, {currentCell.z}");
                 try
                 {
                     TryPlaceResource(currentCell, Resources[0], deleteTrees: true, storePostGenerationType: true);
-                    helper.Log($"Placed");
                 }
-                catch (Exception e)
+                catch (PlacementFailedException e)
                 {
                     helper.Log($"Not placed");
                     helper.Log(e.ToString());
                 }
             }
             
-            helper.Log("Finished generating GoldDeposit"); 
-            Console.WriteLine("Finished generating GoldDeposit");
+            helper.Log("Finished generating GoldDeposit");
             return true;
         }
     }
@@ -402,10 +419,11 @@ namespace KaC_Modding_Engine_API
         public string Name;
         public GameObject Model;
         public ResourceType ResourceType; // Main.RegisterResource() assigns this
+        // TODO: CanBeDestroyedBy (Eg Rock destroyer, axe tool)
         
         /// <summary>
         /// The ResourceTypeBase to appear on the map.
-        /// Generated using a Generator which is part of a ModConfig
+        /// Generated using a Generator which is part of a ModConfigME
         /// </summary>
         /// <param name="name">The name of the ResourceTypeBase</param>
         /// <param name="model">The model to be used on the map</param>
@@ -434,8 +452,8 @@ namespace KaC_Modding_Engine_API
         /// <param name="resourceTypeBases">The list of resources this generatorBase will use</param>
         public GeneratorBase(ResourceTypeBase[] resourceTypeBases)
         {
-            Main.Inst.Helper.Log($"Creating GeneratorBase ({GetType()}).\n" +
-                                 $"It contains the resources:\n {resourceTypeBases.ToList().Join(null, "\n")}");
+            Main.Inst.Helper.Log($"Creating {GetType()}.\n" +
+                                 $"It contains the resources:\n\t{resourceTypeBases.ToList().Join(null, "\n\t")}");
 
             Name = GetType().ToString(); // The name of the class derived from this
             Resources = resourceTypeBases;
@@ -480,6 +498,7 @@ namespace KaC_Modding_Engine_API
         {
             try
             {
+                Main.Inst.Helper.Log($"Placing {resourceTypeBase} at {cell.x}, {cell.z}");;
                 cell.Type = resourceTypeBase.ResourceType;
                 GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(resourceTypeBase.Model);
 
@@ -496,6 +515,7 @@ namespace KaC_Modding_Engine_API
                 }
 
                 cell.Models.Add(gameObject);
+                Main.Inst.Helper.Log("Placed");
             }
             catch (Exception e)
             {
@@ -649,15 +669,16 @@ namespace KaC_Modding_Engine_API
         /// Runs after map has been generated and adds every resource with a Generate() method
         /// </summary>
         /// <param name="__instance"></param>
-        static void Postfix(ref World __instance)
+        public static void Postfix(ref World __instance)
         {
             KCModHelper helper = Main.Inst.Helper;
             if (helper == null) return;
             
             helper.Log($"POSTFIXING \"GenLand\" with seed: {__instance.seed.ToString()}");
-
+            helper.Log("Calling methods: " + string.Join(", ", Main.GetCallingMethods()));
+    
             if (Main.Inst.ModConfigs == null) return;
-            foreach (ModConfig modConfig in Main.Inst.ModConfigs)
+            foreach (ModConfigME modConfig in Main.Inst.ModConfigs)
             {
                 if (modConfig.Generators == null) continue;
                 helper.Log($"Mod {modConfig.ModName} contains {modConfig.Generators.Length} generators");
@@ -697,7 +718,7 @@ namespace KaC_Modding_Engine_API
         /// Unpack all of the modded ResourceTypes
         /// </summary>
         /// <param name="__result"></param>
-        static void Postfix(ref World __result)
+        public static void Postfix(ref World __result)
         {
             try
             {
@@ -705,19 +726,16 @@ namespace KaC_Modding_Engine_API
                 KCModHelper helper = Main.Inst.Helper;
                 World world = __result;
 
-                helper.Log($"Patching \"Unpack\" with seed {__result.seed}");
+                helper.Log($"POSTFIXING \"Unpack\" with seed {__result.seed}");
 
                 // Create generator to be able to use it's methods
-                ResourceTypeBase[]
-                    resourceTypeBases = new ResourceTypeBase[256]; // 256 is max KaC modding engine installer does
+                ResourceTypeBase[] resourceTypeBases = new ResourceTypeBase[256]; // 256 is max KaC modding engine installer does
                 foreach (var generatorBase in Main.Inst.ModConfigs.SelectMany(modConfig => modConfig.Generators))
                 {
                     resourceTypeBases.AddRangeToArray(generatorBase.Resources);
-                }
-
-                GeneratorBase generator = new GeneratorBase(resourceTypeBases);
-
-
+                }    
+                if (resourceTypeBases.Length == 0) return;
+                
                 Cell[] cellData = WorldTools.GetCellData(world);
                 Cell.CellSaveData[] cellSaveData =
                     (Cell.CellSaveData[]) WorldTools.GetPrivateWorldField(world, "cellSaveData");
@@ -746,6 +764,7 @@ namespace KaC_Modding_Engine_API
                 }
 
                 WorldTools.SetCellData(world, cellData);
+                helper.Log("Finished patching Unpack");
             }
             catch (Exception e)
             {
@@ -754,60 +773,65 @@ namespace KaC_Modding_Engine_API
         }
     }
 
+    [HarmonyPatch(typeof(KCModHelper.ModLoader), "SendScenePreloadSignal")]
+    class SendScenePreloadSignal_Patch
+    {
+        public static void Postfix()
+        {
+            Main.Inst.Helper.Log("After SceneLoaded");
+            Main.Inst.Helper.Log(string.Join(", ", Main.GetCallingMethods()));
+
+            // Initialise my mod in PreloadSignal
+            // That way it is the last thing loaded
+            // Wants other mods to register in SceneLoaded or before
+        }
+    }
+    
     public static class WorldTools
     {
         public static Cell[] GetCellData(World world)
         {
-            /*
-             * Emulates this from `World.Unpack(World w)`
-             * for (int i = 0; i < w.cellData.Length; i++)
-			 * {
-			 *     Cell cell = w.cellData[i];
-             * }
-             */
-            
-            Type type = typeof(World);
-            //object lateBound = Activator.CreateInstance(type); // late-binding??
- 
-            PropertyInfo cellDataProperty = type.GetProperty("cellData");
-            return (Cell[]) cellDataProperty.GetValue(world, null);
+            return (Cell[]) GetPrivateField(world, "cellData");
         }
 
         public static void SetCellData(World world, Cell cell, int i)
         {
-            Type type = typeof(World);
-            PropertyInfo cellDataProperty = type.GetProperty("cellData");
-
             // Get a copy of cellData and edit it
             Cell[] newCellData = GetCellData(world);
             newCellData[i] = cell;
             
-            // Set cellData to be the edited version
-            cellDataProperty.SetValue(world, cell, null);
+            SetPrivateField(world, "cellData", newCellData);
         }
 
         public static void SetCellData(World world, Cell[] newCellData)
         {
-            Type type = typeof(World);
-            PropertyInfo cellDataProperty = type.GetProperty("cellData");
-            
-            // Set cellData to be the edited version
-            cellDataProperty.SetValue(world, newCellData, null);
+            SetPrivateField(world, "cellData", newCellData);
         }
 
         /// <summary>
-        /// Uses GetPrivateWorldField to get randomStoneState from world
+        /// Sets a private field using reflection
         /// </summary>
-        /// <param name="world"></param>
+        /// <param name="instance">The object containing the private field</param>
+        /// <param name="fieldName">The name of the private field</param>
+        /// <param name="newValue">The new value the field will hold</param>
+        public static void SetPrivateField(object instance, string fieldName, object newValue)
+        {
+            Type type = instance.GetType();
+            PropertyInfo cellDataProperty = type.GetProperty(fieldName);
+            
+            // Set fieldName's value to the NewValue
+            cellDataProperty?.SetValue(type, newValue, null);
+        }
+
+        /// <summary>
+        /// Uses GetPrivateWorldField to get randomStoneState
+        /// </summary>
+        /// <param name="world">The instance of World randomStoneState will be read from</param>
         /// <returns>A copy of randomStoneState from the given world</returns>
         public static System.Random GetRandomStoneState(World world)
         {
-            Console.WriteLine("Starting GetRandomStoneState");
-            // Pretty sure this is always `new System.Random(1234567);`
-            System.Random result = (System.Random) GetPrivateWorldField(world, "randomStoneState");
-            Console.WriteLine("Got randomStoneState");
-            return result;
-            }
+            return (System.Random) GetPrivateWorldField(world, "randomStoneState");
+        }
 
         /// <summary>
         /// Gets a private field from a given World instance with the given FieldName
@@ -822,20 +846,28 @@ namespace KaC_Modding_Engine_API
             return GetPrivateField(world, fieldName, fieldIsStatic);
         }
 
-        public static object GetPrivateField(object world, string fieldName, bool fieldIsStatic = false)
+        /// <summary>
+        /// Get value of a private field
+        /// </summary>
+        /// <param name="instance">The instance that contains the private field</param>
+        /// <param name="fieldName">The private field name</param>
+        /// <param name="fieldIsStatic">Is the field static</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static object GetPrivateField(object instance, string fieldName, bool fieldIsStatic = false)
         {
             string exceptionString =
-                $"{fieldName} does not correspond to a private {(fieldIsStatic ? "static" : "instance")} field in {world}";
+                $"{fieldName} does not correspond to a private {(fieldIsStatic ? "static" : "instance")} field in {instance}";
             object result;
             try
             {
-                Type type = world.GetType();
+                Type type = instance.GetType();
 
                 FieldInfo fieldInfo = fieldIsStatic ? type.GetField(fieldName, BindingFlags.Static | BindingFlags.NonPublic) : type.GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
                 
                 if (fieldInfo == null) throw new ArgumentException(exceptionString);
                 
-                result = fieldInfo.GetValue(world);
+                result = fieldInfo.GetValue(instance);
             }
             catch (Exception e)
             {
@@ -917,6 +949,196 @@ namespace KaC_Modding_Engine_API
 
         protected PlacementFailedException([NotNull] SerializationInfo info, StreamingContext context) : base(info, context)
         {
+        }
+    }
+
+    public class ToolTipText
+    {
+        /// <summary>
+        /// A dictionary of ISO639_3 to ToolTip
+        /// </summary>
+        private Dictionary<string, string> dict = new Dictionary<string, string>();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="languageTextDictionary"></param>
+        /// <param name="ISOCode">The ISO639 standard that the dictionary uses</param>
+        public ToolTipText(Dictionary<string, string> languageTextDictionary, ISO639Code ISOCode = ISO639Code.ISO639_3)
+        {
+            // Set from whatever ISO639 code to ISO639-3
+            string[] langArray = ISO639.GetLangArrayFromISO639(ISOCode);
+            Dictionary<string, string> newDict = new Dictionary<string, string>();
+
+            foreach (var langCode in langArray)
+            {
+                languageTextDictionary.TryGetValue(langCode, out string toolTip);
+
+                if (dict.ContainsKey(langCode))
+                {
+                    dict.Remove(langCode);
+                }
+
+                dict.Add(ISO639.ConvertStandard(langCode, ISOCode), toolTip);
+            }
+        }
+
+        public ToolTipText(string[] textArray)
+        {
+            for(int x = 0; x < textArray.Length; x++)
+            {
+                dict[ISO639.languagesISO639_3[x]] = textArray[x];
+            }
+        }
+    }
+    
+    public enum ISO639Code
+    {
+        ISO639_1,
+        ISO639_2_T,
+        ISO639_2_B,
+        ISO639_3,
+    }
+
+    public static class ISO639
+    {
+        // Private arrays for converting from any language code to language code `ISO 639-3`
+        public static readonly string[] languagesISO639_1 = new[]
+        {
+            "en",
+            "de",
+            "fr",
+            "zh1",
+            "zh2",
+            "es",
+            "nl",
+            "pt",
+            "it",
+            "ja",
+            "ko",
+            "no",
+            "pl",
+            "ro",
+            "ru",
+            "uk",
+            "sv",
+            "tr"
+        };
+
+        public static readonly string[] languagesISO639_2_T = new[]
+        {
+            "eng",
+            "deu",
+            "fra",
+            "zho1",
+            "zho2",
+            "spa",
+            "nld",
+            "por",
+            "ita",
+            "jpn",
+            "kor",
+            "nor",
+            "pol",
+            "ron",
+            "rus",
+            "ukr",
+            "swe",
+            "tur"
+        };
+
+        public static readonly string[] languagesISO639_2_B = new[]
+        {
+            "eng",
+            "ger",
+            "fre",
+            "chi1",
+            "chi2",
+            "spa",
+            "dut",
+            "por",
+            "ita",
+            "jpn",
+            "kor",
+            "nor",
+            "pol",
+            "rum",
+            "rus",
+            "ukr",
+            "swe",
+            "tur"
+        };
+
+        /// <summary>
+        /// This is the preferred ISO language code of this mod (See wiki on Chinese variation)
+        /// </summary>
+        public static readonly string[] languagesISO639_3 = new[]
+        {
+            "eng",
+            "deu",
+            "fra",
+            "zho1",
+            "zho2",
+            "spa",
+            "nld",
+            "por",
+            "ita",
+            "jpn",
+            "kor",
+            "nor",
+            "pol",
+            "ron",
+            "rus",
+            "ukr",
+            "swe",
+            "tur"
+        };
+
+        public static string[] GetLangArrayFromISO639(ISO639Code ISOCode)
+        {
+            string[] langArray;
+            switch (ISOCode)
+            {
+                case ISO639Code.ISO639_1:
+                    langArray = ISO639.languagesISO639_1;
+                    break;
+                case ISO639Code.ISO639_2_T:
+                    langArray = ISO639.languagesISO639_2_T;
+                    break;
+                case ISO639Code.ISO639_2_B:
+                    langArray = ISO639.languagesISO639_2_B;
+                    break;
+                case ISO639Code.ISO639_3:
+                    langArray = ISO639.languagesISO639_3;
+                    break;
+                default:
+                    langArray = ISO639.languagesISO639_3;
+                    break;
+            }
+
+            return langArray;
+        }
+
+        /// <summary>
+        /// Converts between standards
+        /// </summary>
+        /// <param name="str"></param>
+        /// <param name="codeFrom"></param>
+        /// <param name="codeTo"></param>
+        /// <returns></returns>
+        public static string ConvertStandard(string str, ISO639Code codeFrom, ISO639Code codeTo = ISO639Code.ISO639_3)
+        {
+            string[] fromArray = GetLangArrayFromISO639(codeFrom);
+
+            for (int x = 0; x < fromArray.Length; x++)
+            {
+                if (fromArray[x] == str)
+                {
+                    return GetLangArrayFromISO639(codeTo)[x];
+                }
+            }
+
+            return null;
         }
     }
 }
