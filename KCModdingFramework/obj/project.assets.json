@@ -15,11 +15,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\green\\RiderProjects\\KaC-Modding-Engine-API\\KaC-Modding-Engine-API\\KaC-Modding-Engine-API.csproj",
-      "projectName": "KaC-Modding-Engine-API",
-      "projectPath": "C:\\Users\\green\\RiderProjects\\KaC-Modding-Engine-API\\KaC-Modding-Engine-API\\KaC-Modding-Engine-API.csproj",
+      "projectUniqueName": "C:\\Users\\green\\RiderProjects\\KaC-Modding-Engine-API\\KCModdingFramework\\KCModdingFramework.csproj",
+      "projectName": "KCModdingFramework",
+      "projectPath": "C:\\Users\\green\\RiderProjects\\KaC-Modding-Engine-API\\KCModdingFramework\\KCModdingFramework.csproj",
       "packagesPath": "C:\\Users\\green\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\green\\RiderProjects\\KaC-Modding-Engine-API\\KaC-Modding-Engine-API\\obj\\",
+      "outputPath": "C:\\Users\\green\\RiderProjects\\KaC-Modding-Engine-API\\KCModdingFramework\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Microsoft\\Xamarin\\NuGet",
@@ -39,6 +39,7 @@
       },
       "frameworks": {
         "net45": {
+          "targetAlias": "net45",
           "projectReferences": {}
         }
       },
@@ -50,6 +51,7 @@
     },
     "frameworks": {
       "net45": {
+        "targetAlias": "net45",
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.100\\RuntimeIdentifierGraph.json"
       }
     }
