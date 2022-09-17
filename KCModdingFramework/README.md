@@ -1,3 +1,3 @@
-﻿# KaC Modding Engine API
+﻿# KC modding framework
 
-Provides an interface for mods that want to use the KaC modding engine. Requires the KaC modding engine installer
+Provides a framework for Kingdoms and Castles mods to remove most of the heavy lifting from modders
