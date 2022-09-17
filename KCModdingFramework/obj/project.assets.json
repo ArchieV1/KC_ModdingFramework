@@ -15,11 +15,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\green\\RiderProjects\\KaC-Modding-Engine-API\\KCModdingFramework\\KCModdingFramework.csproj",
+      "projectUniqueName": "C:\\Users\\green\\RiderProjects\\KCModdingFramework\\KCModdingFramework\\KCModdingFramework.csproj",
       "projectName": "KCModdingFramework",
-      "projectPath": "C:\\Users\\green\\RiderProjects\\KaC-Modding-Engine-API\\KCModdingFramework\\KCModdingFramework.csproj",
+      "projectPath": "C:\\Users\\green\\RiderProjects\\KCModdingFramework\\KCModdingFramework\\KCModdingFramework.csproj",
       "packagesPath": "C:\\Users\\green\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\green\\RiderProjects\\KaC-Modding-Engine-API\\KCModdingFramework\\obj\\",
+      "outputPath": "C:\\Users\\green\\RiderProjects\\KCModdingFramework\\KCModdingFramework\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Microsoft\\Xamarin\\NuGet",
