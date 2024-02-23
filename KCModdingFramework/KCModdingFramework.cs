@@ -1,43 +1,150 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Harmony;
+using KaC_Modding_Engine_API.Shared.ArchieV1;
+using KaC_Modding_Engine_API.Objects.Generators;
+using KaC_Modding_Engine_API.Tools;
 using Newtonsoft.Json;
+using HarmonyLib;
 using Priority_Queue;
 using UnityEngine;
 using UnityEngine.Events;
+using KaC_Modding_Engine_API.Objects.Resources;
+using KaC_Modding_Engine_API.Objects.ModConfig;
+using KaC_Modding_Engine_API.Names;
+using static KaC_Modding_Engine_API.Objects.Resources.VanillaModdedResourceTypes;
+using System.Runtime.InteropServices;
 
 public class ModdingFramework : MonoBehaviour
 {
+    /// <summary>
+    /// The KCModHelper injected by KC
+    /// </summary>
     public KCModHelper Helper { get; private set; }
-    public static string cat = "ModdingFramework";
+
+    /// <summary>
+    /// Gets a Random to be used. Can be set with seed to remove randomness for testing.
+    /// </summary>
+    public Random Random { get; } = new Random(123456789);
+
+    /// <summary>
+    /// The name of this mod
+    /// </summary>
+    public string cat => "KCModdingFramework";
+
+    /// <summary>
+    /// The instance of this object
+    /// </summary>
     public static ModdingFramework Inst { get; private set; }
 
-    private ResourceTypeBase _defaultResourceTypeBase = new ResourceTypeBase
+    /// <summary>
+    /// List all of the ResourceTypes that have been assigned to ModdedResourceTypes (Including default ones).
+    /// </summary>
+    public IEnumerable<ResourceType> AssignedResourceTypes
     {
-        DefaultResource = true
-    };
-    public ResourceType[] listOfDefaultResources =
-    {
-        ResourceType.None,
-        ResourceType.Stone,
-        ResourceType.Water,
-        ResourceType.Wood,
-        ResourceType.EmptyCave,
-        ResourceType.IronDeposit,
-        ResourceType.UnusableStone,
-        ResourceType.WitchHut,
-        ResourceType.WolfDen
-    };
-   
+        get
+        {
+            return RegisteredModdedResourceTypes.Select(mrt => mrt.ResourceType);
+        }
+    }
 
-    // List of all ResourceTypes
-    private Dictionary<ResourceType, ResourceTypeBase> _assignedResourceTypes = new Dictionary<ResourceType, ResourceTypeBase>();
-    
-    // List of modConfigs
-    public List<ModConfigMF> RegisteredModConfigs = new List<ModConfigMF>();
-    public List<ModConfigMF> UnregisteredModConfigs = new List<ModConfigMF>();
-    public List<GeneratorBase> RegisteredGenerators = new List<GeneratorBase>();
+    /// <summary>
+    /// Gets all ModdedResourceTypes from all ModConfigs.
+    /// </summary>
+    public IEnumerable<ModdedResourceType> ModdedResourceTypes
+    {
+        get
+        {
+            return ModConfigs.SelectMany(mc => mc.ModdedResourceTypes);
+        }
+    }
+
+    /// <summary>
+    /// Gets all <see cref="ModdedResourceType"/> that have been registered with the ModdingFramework (Including <see cref="VanillaModdedResourceTypes"/>.
+    /// </summary>
+    public IEnumerable<ModdedResourceType> RegisteredModdedResourceTypes
+    {
+        get
+        {
+            return RegisteredModConfigs.SelectMany(rmc => rmc.ModdedResourceTypes).Union(VanillaModdedResourceTypes);
+        }
+    }
+
+    /// <summary>
+    /// Gets all of the Vanilla ResourceTypes represented as ModdedResourceTypes.
+    /// </summary>
+    public ICollection<ModdedResourceType> VanillaModdedResourceTypes { get; }
+
+    /// <summary>
+    /// Gets all<see cref="ModdedResourceType"/> that have NOT been registered with the ModdingFramework.
+    /// </summary>
+    public IEnumerable<ModdedResourceType> UnregisteredModdedResourceTypes
+    {
+        get
+        {
+            return UnregisteredModConfigs.SelectMany(rmc => rmc.ModdedResourceTypes);
+        }
+    }
+
+    /// <summary>
+    /// Gets all ModConfigs (Registered or not)
+    /// </summary>
+    public List<ModConfigMF> ModConfigs { get; private set; }
+
+    /// <summary>
+    /// Gets all Registered ModConfigs.
+    /// </summary>
+    public IEnumerable<ModConfigMF> RegisteredModConfigs 
+    {
+        get
+        {
+            return ModConfigs.Where(c => c.Registered);
+        }
+    }
+
+    /// <summary>
+    /// Gets all Unregistered ModConfigs.
+    /// </summary>
+    public IEnumerable<ModConfigMF> UnregisteredModConfigs
+    {
+        get
+        {
+            return ModConfigs.Where(c => !c.Registered);
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets all of the Generators from all of the ModConfigs.
+    /// </summary>
+    public IEnumerable<GeneratorBase> Generators
+    {
+        get
+        {
+            return ModConfigs.SelectMany(mc => mc.Generators);
+        }
+    }
+
+    /// <summary>
+    /// Gets all Registered Generators.
+    /// </summary>
+    public IEnumerable<GeneratorBase> RegisteredGenerators
+    {
+        get
+        {
+            return Generators.Where(g => g.Registered);
+        }
+    }
+
+    /// <summary>
+    /// Gets all Unregistered Generators.
+    /// </summary>
+    public IEnumerable<GeneratorBase> UnregisteredGenerators
+    {
+        get
+        {
+            return Generators.Where(g => !g.Registered);
+        }
+    }
 
     // For mod registering
     public IMCPort port;
@@ -52,6 +159,9 @@ public class ModdingFramework : MonoBehaviour
         harmony.PatchAll();
         
         Inst = this;
+
+        ULogger.Log(cat, $"Adding VanilliaModdedResourceTypes to RegisteredModdedResourceTypes");
+        this.VanillaModdedResourceTypes = (ICollection<ModdedResourceType>)GenerateList();
     }
 
     public void Preload(KCModHelper helper)
@@ -59,74 +169,77 @@ public class ModdingFramework : MonoBehaviour
         Helper = helper;
         Debugging.Helper = Helper;
         Debugging.Active = true;
-        Helper.Log($"Loading KCModdingFramework at {DateTime.Now}");
-        Helper.Log($"===============Preload===============");
-        
-        // Mark the default values as assigned (ironDeposit, stoneDeposit etc)
-        Helper.Log("Adding default ResourceTypes to _assignedResourceTypes");
-        foreach (ResourceType resource in listOfDefaultResources)
-        {
-            _assignedResourceTypes.Add(resource, _defaultResourceTypeBase);
-        }
-        Helper.Log("Finished adding default ResourceTypes to _assignedResourceTypes");
+
+        ULogger.Log(cat, $"Loading KCModdingFramework at {DateTime.Now}");
+        ULogger.Log(cat, $"===============Preload===============");
         
         LogDump();
     }
     
     public void PreScriptLoad(KCModHelper helper)
     {
-        Helper.Log($"===============PreScriptLoad===============");
+        ULogger.Log(cat, $"===============PreScriptLoad===============");
     }
 
     public void SceneLoaded(KCModHelper helper)
     {
-        // Register mods here??
-        Helper.Log(($"===============SceneLoaded==============="));
-        
-        // Assign port
-        transform.name = ModdingFrameworkNames.Objects.ModdingFrameworkName;
-        gameObject.name = ModdingFrameworkNames.Objects.ModdingFrameworkName;
-        port = gameObject.AddComponent<IMCPort>();
-        port.RegisterReceiveListener<ModConfigMF>(ModdingFrameworkNames.Methods.RegisterMod, RegisterModHandler);
+        ULogger.Log(cat, $"===============SceneLoaded===============");
     }
 
     public void Start()
     {
-        Helper.Log($"===============Start===============");
+        ULogger.Log(cat, $"===============Start===============");
         LogDump();
+
+        // Assign port
+        transform.name = ObjectNames.ModdingFrameworkName;
+        gameObject.name = ObjectNames.ModdingFrameworkName;
+        port = gameObject.AddComponent<IMCPort>();
+        port.RegisterReceiveListener<ModConfigMF>(MethodNames.RegisterMod, RegisterModHandler);
+
+        // How to know which mods use ModConfig?
+        // TODO question above
+
+        // Register all loaded mods
+        for (int i = 0; i < ModConfigs.Count(); i++)
+        {
+            ModConfigMF mod = ModConfigs[i];
+            try
+            {
+                RegisterMod(ref mod);
+                handler.SendResponse(port.gameObject.name, $"Successfully registered mod from {port.gameObject.name}");
+            }
+            catch (Exception e)
+            {
+                ULogger.Log(cat, $"Failed to register mod {source}\n");
+                ULogger.Log(cat, e);
+                handler.SendError(port.gameObject.name, e);
+            }
+        }
     }
     #endregion
     
     private void RegisterModHandler(IRequestHandler handler, string source, ModConfigMF mod)
     {
-        Helper.Log($"Received message from {source}");
-        Helper.Log($"Registering mod (Handler)\n" +
-                   $"Mod: `{mod}`\n" +
-                   $"Source: {source}\n" +
-                   $"Handler: {handler}");
-        Helper.Log(Tools.GetCallingMethodsAsString());
-        ULogger.Log(cat, $"Registering: `{mod}`");
-        ULogger.Log(cat, $"Source: `{source}`");
-        
-        try
-        {
-            RegisterMod(mod);
-            handler.SendResponse(port.gameObject.name,$"Successfully registered mod from {port.gameObject.name}");
-        }
-        catch (Exception e)
-        {
-            ULogger.Log(cat, $"Failed to register mod {source}\n");
-            ULogger.Log(cat, e);
-            handler.SendError(port.gameObject.name, e);
-        }
+        ULogger.Log(cat, $"Received message from {source}");
+        ULogger.Log(
+            cat,
+            $"Registering mod (Handler)\n" +
+            $"Mod: `{mod}`\n" +
+            $"Source: {source}\n" +
+            $"Handler: {handler}");
+
+        // Add to ModConfid list ready to be registered
+        mod.Registered = false;
+        ModConfigs.Add(mod);
     }
 
     /// <summary>
-    /// Registers the given mod. Changes "Registered" to true (Even if it failed to register the mod in its entirety
+    /// Registers the given mod. Changes "Registered" to true (Unless it failed to register any part of it)
     /// </summary>
     /// <param name="ModConfigMF"></param>
     /// <returns>Returns false if failed to register mod in its entirety</returns>
-    public void RegisterMod(ModConfigMF ModConfigMF)
+    public void RegisterMod(ref ModConfigMF ModConfigMF)
     {
         if (ModConfigMF == null)
         {
@@ -137,19 +250,33 @@ public class ModdingFramework : MonoBehaviour
         // Check if mod can be encoded (No self referencing loops)
         try
         {
-            _ = IMCMessage.CreateRequest(name, name,
+            _ = IMCMessage.CreateRequest(
+                ObjectNames.ModdingFrameworkName,
+                ModConfigMF,
                 JsonConvert.SerializeObject(ModConfigMF, IMCPort.serializerSettings));
         }
         catch (Exception e)
         {
-            Helper.Log("Failed to encode mod with error:");
-            Helper.Log(e.ToString());
+            ULogger.Log(cat, "Failed to encode mod with error:");
+            ULogger.Log(cat, e.ToString());
         }
 
-        Helper.Log($"Registering {ModConfigMF.ModName} by {ModConfigMF.Author}...");
+        ULogger.Log(cat, $"Registering {ModConfigMF.ModName} by {ModConfigMF.Author}...");
 
-        // Assigns each GeneratorBase an unassignedResourceType
-        int numInitialGenRegistered = RegisteredGenerators.Count;
+        // Registers all ModdedResourceType 
+        foreach (ModdedResourceType moddedResourceType in ModConfigMF.ModdedResourceTypes)
+        {
+            try
+            {
+                RegisterResource(moddedResourceType, ModConfigMF.AssetBundles);
+            }
+            catch (Exception e)
+            {
+                ULogger.Log(e);
+            }
+        }
+
+        // Registers each Generator
         foreach (GeneratorBase generator in ModConfigMF.Generators)
         {
             try
@@ -160,22 +287,11 @@ public class ModdingFramework : MonoBehaviour
             {
                 ULogger.Log(e);
             }
-        }
-        int numGeneratorsRegistered = RegisteredGenerators.Count - numInitialGenRegistered;
-        
-        
-        if (ModConfigMF.Generators.Length != numGeneratorsRegistered)
-        {
-            Helper.Log($"Failed to register {ModConfigMF.ModName} by {ModConfigMF.Author}.\n" +
-                       $"Registered {numGeneratorsRegistered} generators.\n" +
-                       $"Failed to register {ModConfigMF.Generators.Length - numGeneratorsRegistered} generators.");
-            throw new Exception("Failed to register mod");
-        }
+        }        
 
-        Helper.Log($"Registered {ModConfigMF.ModName} by {ModConfigMF.Author} successfully!\n" +
-                   $"Registered {numGeneratorsRegistered} generators.");
+        ULogger.Log($"Registered {ModConfigMF.ModName} by {ModConfigMF.Author} successfully!\n" +
+                   $"Registered {ModConfigMF.Generators.Count()} generators.");
         ModConfigMF.Registered = true;
-        RegisteredModConfigs.Add(ModConfigMF);
     }
 
     /// <summary>
@@ -184,268 +300,110 @@ public class ModdingFramework : MonoBehaviour
     /// <param name="generator"></param>
     private void RegisterGenerator(GeneratorBase generator)
     {
-        foreach(ResourceTypeBase resourceTypeBase in generator.Resources)
+        for (int i = 0; i < generator.Resources.Count(); i++)
         {
-            AssignResourceTypeBase(resourceTypeBase);
-            resourceTypeBase.LoadAssetBundle(Helper);
-            resourceTypeBase.LoadModel();
+            ModdedResourceType moddedResourceType = generator.Resources[i];
+            AssignModdedResourceType(ref moddedResourceType);
+            moddedResourceType.LoadAssetBundle(Helper);
+            moddedResourceType.LoadModel();
         }
-        RegisteredGenerators.Add(generator);
+        RegisteredGenerators.AddItem(generator);
     }
 
     /// <summary>
     /// Assigns the resourceTypeBase an unassigned ResourceType
     /// </summary>
-    /// <param name="resourceTypeBase"></param>
+    /// <param name="moddedResourceType"></param>
     /// <param name="assetBundle"></param>
     /// <returns></returns>
-    private void RegisterResource(ResourceTypeBase resourceTypeBase, AssetBundle assetBundle)
+    private void RegisterResource(ModdedResourceType moddedResourceType, AssetBundle assetBundle)
     {
-        Helper.Log($"Registering resourceTypeBase {resourceTypeBase}");
-        resourceTypeBase.Model = assetBundle.LoadAsset(resourceTypeBase.AssetBundlePath) as GameObject; // Not loaded earlier as breaks JSON encoding
+        ULogger.Log($"Registering ModdedResourceType: {moddedResourceType}");
+
+        // Not loaded earlier as breaks JSON encoding
+        moddedResourceType.Model = assetBundle.LoadAsset(moddedResourceType.AssetBundlePath) as GameObject;
         
-        AssignResourceTypeBase(resourceTypeBase);
+        AssignModdedResourceType(ref moddedResourceType);
     }
 
-    #region ResourceTypeAssigning
-
     /// <summary>
-    /// Assigns given ResourceTypeBase an unassigned ResourceType
+    /// Assigns given <paramref name="moddedResourceType"/> an unassigned ResourceType
     /// </summary>
-    /// <param name="resourceTypeBase"></param>
-    /// <returns></returns>
-    private void AssignResourceTypeBase(ResourceTypeBase resourceTypeBase)
+    /// <param name="moddedResourceType"></param>
+    private void AssignModdedResourceType(ref ModdedResourceType moddedResourceType)
     {
-        ResourceType resourceType = (ResourceType) int.MaxValue;
-        foreach (int val in Enumerable.Range(0, int.MaxValue).ToArray())
+        bool notAssigned = true;
+        while (notAssigned)
         {
-            if (!_assignedResourceTypes.ContainsKey((ResourceType) val))
+            ResourceType possibleResourceType = (ResourceType) Random.Next();
+            if (!AssignedResourceTypes.Contains(possibleResourceType))
             {
-                AssignResourceTypeBase((ResourceType) val, resourceTypeBase);
+                moddedResourceType.ResourceType = possibleResourceType;
+                moddedResourceType.Registered = true;
+
+                notAssigned = false;
             }
         }
-    }
-    
-    /// <summary>
-    /// Adds resourceType/resourceTypeBase pair to _assignedResourceTypes
-    /// </summary>
-    /// <param name="resourceType"></param>
-    /// <param name="resourceTypeBase"></param>
-    /// <returns>True if success</returns>
-    private void AssignResourceTypeBase(ResourceType resourceType, ResourceTypeBase resourceTypeBase)
-    {
-        if (_assignedResourceTypes.ContainsKey(resourceType))
-        {
-            Helper.Log($"DID NOT ASSIGN {resourceTypeBase.Name} resourceType: {resourceTypeBase.ResourceType}");
-            throw new ArgumentException($"Key, {resourceType}, is already assigned.");
-        }
-        
-        _assignedResourceTypes.Add(resourceType, resourceTypeBase);
-        resourceTypeBase.ResourceType = resourceType;
 
-        Helper.Log($"Assigned {resourceTypeBase.Name} resourceType: {resourceTypeBase.ResourceType}");
-    }
-
-    /// <summary>
-    /// Removes ResourceType/ResourceTypeBase pair by resourceType from _assignedResourceTypes
-    /// </summary>
-    /// <param name="resourceType"></param>
-    private void UnassignResourceType(ResourceType resourceType)
-    {
-        if (_assignedResourceTypes.ContainsKey(resourceType))
-        {
-            _assignedResourceTypes.Remove(resourceType);
-            _assignedResourceTypes[resourceType].ResourceType = ResourceType.None;
-        }
-        else
-        {
-            throw new ArgumentException($"{resourceType} is not assigned");
-        }
+        ULogger.Log(cat, $"Assigned {moddedResourceType.Name} to {moddedResourceType.ResourceType}");
     }
 
     /// <summary>
     /// Removes ResourceType/ResourceTypeBase pair by resourceTypeBase from _assignedResourceTypes
     /// </summary>
-    /// <param name="resourceTypeBase"></param>
-    private void UnassignResourceType(ResourceTypeBase resourceTypeBase)
+    /// <param name="moddedResourceType"></param>
+    private void UnassignModdedResourceType(ref ModdedResourceType moddedResourceType)
     {
-        UnassignResourceType(GetResourceType(resourceTypeBase));
-    }
-    
-    public ResourceTypeBase GetResourceTypeBase(ResourceType resourceType)
-    {
-        return _assignedResourceTypes[resourceType];
+        moddedResourceType.ResourceType = ResourceType.None;
+        moddedResourceType.Registered = false;
     }
 
     /// <summary>
-    /// DOES NOT PROMISE TO FIND CORRECT VALUE. MAY FIND DEFAULT
+    /// Gets a RegisteredModdedResource by its name. Will return empty object if one is not found.
     /// </summary>
-    /// <param name="resourceTypeBase"></param>
-    /// <returns></returns>
-    public ResourceType GetResourceType(ResourceTypeBase resourceTypeBase)
+    /// <param name="name">The name of the ModdedResourceType</param>
+    /// <returns>The requested ModdedResourceType or an empty object.</returns>
+    public ModdedResourceType GetRegisteredModdedResourceTypeByName(string name)
     {
-        return _assignedResourceTypes.FirstOrDefault(x => x.Value == resourceTypeBase).Key;
+        // For mod A to use resource from mod B via ModdingFramework
+        return RegisteredModdedResourceTypes.Where(mrt => mrt.Name.ToLowerInvariant() == name.ToLowerInvariant()).FirstOrDefault();
     }
-    
-    #endregion
-
-    
 
     /// <summary>
     /// Logs everything about ModdingFramework
     /// </summary>
     public void LogDump()
     {
-        Helper.Log("=========LOG DUMP=========");
+        ULogger.Log("=========LOG DUMP=========");
 
-        Helper.Log($"RANDOM:");
-        Helper.Log($"Helper: {Helper}");
-        Helper.Log($"");
-
-        Helper.Log($"RESOURCES:");
-        Helper.Log($"_assignedResourceTypes: {_assignedResourceTypes.Count}");
-        foreach (KeyValuePair<ResourceType, ResourceTypeBase> pair in _assignedResourceTypes)
+        ULogger.Log($"Resources:");
+        ULogger.Log($"{nameof(AssignedResourceTypes)}: {AssignedResourceTypes.Count()}");
+        foreach (ModdedResourceType mrt in RegisteredModdedResourceTypes)
         {
-            Helper.Log($"{pair.Key, 4} | {pair.Value.Name, 20}");
+            ULogger.Log($"{mrt.Name, 20} | {mrt.ResourceType}");
         }
-        
-        Helper.Log("");
+        ULogger.Log();
 
-        Helper.Log($"RegisteredModConfigs: {RegisteredModConfigs.Count}");
-        Helper.Log(string.Join("\n ", RegisteredModConfigs));
-        
-        
-        Helper.Log("=========END DUMP=========");
+        ULogger.Log($"ModdedResourceTypes:");
+        ULogger.Log($"{nameof(RegisteredModdedResourceTypes)}: {RegisteredModdedResourceTypes.Count()}");
+        ULogger.Log(string.Join("\n ", RegisteredModdedResourceTypes));
+        ULogger.Log($"{nameof(UnregisteredModdedResourceTypes)}: {UnregisteredModdedResourceTypes.Count()}");
+        ULogger.Log(string.Join("\n ", UnregisteredModdedResourceTypes));
+        ULogger.Log();
+
+        ULogger.Log("ModConfigs:");
+        ULogger.Log($"{nameof(RegisteredModConfigs)}: {RegisteredModConfigs.Count()}");
+        ULogger.Log(string.Join("\n ", RegisteredModConfigs));
+        ULogger.Log($"{nameof(UnregisteredModConfigs)}: {UnregisteredModConfigs.Count()}");
+        ULogger.Log(string.Join("\n ", UnregisteredModConfigs));
+
+        ULogger.Log();
+
+        ULogger.Log($"OTHER:");
+        ULogger.Log($"{nameof(Helper)}: {Helper} (Should be registered in Preload)");
+        ULogger.Log("=========END DUMP=========");
     }
 }
-
-#region HarmonyPatches
-[HarmonyPatch(typeof(World), "GenLand")]
-class GenLand_Patch
-{
-    /// <summary>
-    /// Runs after map has been generated and adds every resource with a Generate() method
-    /// </summary>
-    /// <param name="__instance"></param>
-    public static void Postfix(ref World __instance)
-    {
-        KCModHelper helper = ModdingFramework.Inst.Helper;
-        if (helper == null) return;
-        
-        helper.Log($"POSTFIXING \"GenLand\" with seed: {__instance.seed.ToString()}");
-        helper.Log("Calling methods: " + Tools.GetCallingMethodsAsString());
-
-        if (ModdingFramework.Inst.RegisteredModConfigs == null) return;
-        foreach (ModConfigMF modConfig in ModdingFramework.Inst.RegisteredModConfigs)
-        {
-            if (modConfig.Generators == null) continue;
-            helper.Log($"Mod {modConfig.ModName} contains {modConfig.Generators.Length} generators");
-            foreach (GeneratorBase generator in modConfig.Generators)
-            {
-                helper.Log($"Generator: {generator}");
-                helper.Log($"Contains:");
-                if (generator.Resources == null) continue;
-                foreach (var resource in generator.Resources)
-                {
-                    helper.Log($"\t{resource.Name}");
-                }
-
-                // Go and use this GeneratorBase's Generate method using its assigned ResourceTypes (AV00, AV01 etc)
-                bool implemented = false;
-                try
-                {
-                    implemented = generator.Generate(__instance);
-                }
-                catch (Exception e)
-                {
-                    helper.Log(e.ToString());
-                    helper.Log($"Failed to generate: {generator}");
-                }
-
-                helper.Log($"{(implemented ? "Used" : "Didn't use")} {generator}");
-            }
-        }
-        helper.Log("Finished postfixing");
-    }
-}
-
-[HarmonyPatch(typeof(World.WorldSaveData), "Unpack")]
-class Unpack_Patch
-{
-    /// <summary>
-    /// Unpack all of the modded ResourceTypes
-    /// </summary>
-    /// <param name="__result"></param>
-    public static void Postfix(ref World __result)
-    {
-        try
-        {
-            //TODO Determine if this is needed (I think yes 20/04/2021)
-            KCModHelper helper = ModdingFramework.Inst.Helper;
-            World world = __result;
-
-            helper.Log($"POSTFIXING \"Unpack\" with seed {__result.seed}");
-
-            // Create generator to be able to use it's methods
-            ResourceTypeBase[] resourceTypeBases = new ResourceTypeBase[256]; // 256 is max KaC modding engine installer does
-            foreach (var generatorBase in ModdingFramework.Inst.RegisteredModConfigs.SelectMany(modConfig => modConfig.Generators))
-            {
-                resourceTypeBases.AddRangeToArray(generatorBase.Resources);
-            }    
-            if (resourceTypeBases.Length == 0) return;
-            
-            Cell[] cellData = Tools.GetCellData(world);
-            Cell.CellSaveData[] cellSaveData =
-                (Cell.CellSaveData[]) Tools.GetPrivateWorldField(world, "cellSaveData");
-            bool hasDeepWater = false;
-
-            for (int i = 0; i < cellData.Length - 1; i++)
-            {
-                Cell cell = cellData[i];
-                int x = i % world.GridWidth;
-                int z = i / world.GridWidth;
-
-                // Setting the cell.type was done in the method before it this Postfix
-                // It was set if needed for default resources in 
-                if (ModdingFramework.Inst.listOfDefaultResources.Contains(cell.Type)) continue;
-
-                cell.Type = cellSaveData[i].type;
-
-                helper.Log($"Cell {cell.x}, {cell.z} is: {cell.Type}");
-
-                // This is the equivalent of World.SetupStoneForCell
-                ResourceTypeBase currentResourceTypeBase = ModdingFramework.Inst.GetResourceTypeBase(cell.Type);
-                GeneratorBase.TryPlaceResource(cell, currentResourceTypeBase, deleteTrees: false,
-                    storePostGenerationType: true);
-
-                helper.Log($"Set Cell to {currentResourceTypeBase}");
-            }
-
-            Tools.SetCellData(world, cellData);
-            helper.Log("Finished patching Unpack");
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-        }
-    }
-}
-
-[HarmonyPatch(typeof(KCModHelper.ModLoader), "SendScenePreloadSignal")]
-class SendScenePreloadSignal_Patch
-{
-    public static void Postfix()
-    {
-        ModdingFramework.Inst.Helper.Log("SendScenePreloadSignal postfix");
-        ModdingFramework.Inst.Helper.Log(Tools.GetCallingMethodsAsString());
-        ModdingFramework.Inst.Helper.Log("Finished postfixing");
-
-        // Initialise my mod in PreloadSignal
-        // That way it is the last thing loaded
-        // Wants other mods to register in SceneLoaded or before
-    }
-}
-#endregion
 
 public class WorldFields
 {
@@ -500,195 +458,3 @@ public class WorldFields
         
     }
 }
-
-#region ToolTips
-public class ToolTipText
-{
-    /// <summary>
-    /// A dictionary of ISO639_3 to ToolTip
-    /// </summary>
-    private Dictionary<string, string> dict = new Dictionary<string, string>();
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="languageTextDictionary"></param>
-    /// <param name="ISOCode">The ISO639 standard that the dictionary uses</param>
-    public ToolTipText(Dictionary<string, string> languageTextDictionary, ISO639Code ISOCode = ISO639Code.ISO639_3)
-    {
-        // Set from whatever ISO639 code to ISO639-3
-        string[] langArray = ISO639.GetLangArrayFromISO639(ISOCode);
-        Dictionary<string, string> newDict = new Dictionary<string, string>();
-
-        foreach (var langCode in langArray)
-        {
-            languageTextDictionary.TryGetValue(langCode, out string toolTip);
-
-            if (dict.ContainsKey(langCode))
-            {
-                dict.Remove(langCode);
-            }
-
-            dict.Add(ISO639.ConvertStandard(langCode, ISOCode), toolTip);
-        }
-    }
-
-    public ToolTipText(string[] textArray)
-    {
-        for(int x = 0; x < textArray.Length; x++)
-        {
-            dict[ISO639.languagesISO639_3[x]] = textArray[x];
-        }
-    }
-}
-
-public enum ISO639Code
-{
-    ISO639_1,
-    ISO639_2_T,
-    ISO639_2_B,
-    ISO639_3,
-}
-
-public static class ISO639
-{
-    // Private arrays for converting from any language code to language code `ISO 639-3`
-    public static readonly string[] languagesISO639_1 = new[]
-    {
-        "en",
-        "de",
-        "fr",
-        "zh1",
-        "zh2",
-        "es",
-        "nl",
-        "pt",
-        "it",
-        "ja",
-        "ko",
-        "no",
-        "pl",
-        "ro",
-        "ru",
-        "uk",
-        "sv",
-        "tr"
-    };
-
-    public static readonly string[] languagesISO639_2_T = new[]
-    {
-        "eng",
-        "deu",
-        "fra",
-        "zho1",
-        "zho2",
-        "spa",
-        "nld",
-        "por",
-        "ita",
-        "jpn",
-        "kor",
-        "nor",
-        "pol",
-        "ron",
-        "rus",
-        "ukr",
-        "swe",
-        "tur"
-    };
-
-    public static readonly string[] languagesISO639_2_B = new[]
-    {
-        "eng",
-        "ger",
-        "fre",
-        "chi1",
-        "chi2",
-        "spa",
-        "dut",
-        "por",
-        "ita",
-        "jpn",
-        "kor",
-        "nor",
-        "pol",
-        "rum",
-        "rus",
-        "ukr",
-        "swe",
-        "tur"
-    };
-
-    /// <summary>
-    /// This is the preferred ISO language code of this mod (See wiki on Chinese variation)
-    /// </summary>
-    public static readonly string[] languagesISO639_3 = new[]
-    {
-        "eng",
-        "deu",
-        "fra",
-        "zho1",
-        "zho2",
-        "spa",
-        "nld",
-        "por",
-        "ita",
-        "jpn",
-        "kor",
-        "nor",
-        "pol",
-        "ron",
-        "rus",
-        "ukr",
-        "swe",
-        "tur"
-    };
-
-    public static string[] GetLangArrayFromISO639(ISO639Code ISOCode)
-    {
-        string[] langArray;
-        switch (ISOCode)
-        {
-            case ISO639Code.ISO639_1:
-                langArray = ISO639.languagesISO639_1;
-                break;
-            case ISO639Code.ISO639_2_T:
-                langArray = ISO639.languagesISO639_2_T;
-                break;
-            case ISO639Code.ISO639_2_B:
-                langArray = ISO639.languagesISO639_2_B;
-                break;
-            case ISO639Code.ISO639_3:
-                langArray = ISO639.languagesISO639_3;
-                break;
-            default:
-                langArray = ISO639.languagesISO639_3;
-                break;
-        }
-
-        return langArray;
-    }
-
-    /// <summary>
-    /// Converts between standards
-    /// </summary>
-    /// <param name="str"></param>
-    /// <param name="codeFrom"></param>
-    /// <param name="codeTo"></param>
-    /// <returns></returns>
-    public static string ConvertStandard(string str, ISO639Code codeFrom, ISO639Code codeTo = ISO639Code.ISO639_3)
-    {
-        string[] fromArray = GetLangArrayFromISO639(codeFrom);
-
-        for (int x = 0; x < fromArray.Length; x++)
-        {
-            if (fromArray[x] == str)
-            {
-                return GetLangArrayFromISO639(codeTo)[x];
-            }
-        }
-
-        return null;
-    }
-}
-#endregion
