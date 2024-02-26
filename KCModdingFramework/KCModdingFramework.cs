@@ -12,8 +12,10 @@ using UnityEngine.Events;
 using KaC_Modding_Engine_API.Objects.Resources;
 using KaC_Modding_Engine_API.Objects.ModConfig;
 using KaC_Modding_Engine_API.Names;
+using Zat.InterModComm;
+using Zat.Debugging;
 using static KaC_Modding_Engine_API.Objects.Resources.VanillaModdedResourceTypes;
-using System.Runtime.InteropServices;
+using System.Runtime.Remoting.Messaging;
 
 public class ModdingFramework : MonoBehaviour
 {
@@ -25,7 +27,7 @@ public class ModdingFramework : MonoBehaviour
     /// <summary>
     /// Gets a Random to be used. Can be set with seed to remove randomness for testing.
     /// </summary>
-    public Random Random { get; } = new Random(123456789);
+    public System.Random Random { get; } = new System.Random(123456789);
 
     /// <summary>
     /// The name of this mod
@@ -146,8 +148,10 @@ public class ModdingFramework : MonoBehaviour
         }
     }
 
-    // For mod registering
-    public IMCPort port;
+    /// <summary>
+    /// Gets or sets the port that IMC messages will be received in/sent from.
+    /// </summary>
+    public IMCPort Port { get; set; }
 
     #region Initialisation
 
@@ -155,7 +159,7 @@ public class ModdingFramework : MonoBehaviour
     // Therefore #ctor has no Helper class instantiated
     public ModdingFramework()
     {
-        var harmony = HarmonyInstance.Create("uk.ArchieV.KCModdingFramework");
+        Harmony harmony = new Harmony("uk.ArchieV.KCModdingFramework");
         harmony.PatchAll();
         
         Inst = this;
@@ -194,31 +198,50 @@ public class ModdingFramework : MonoBehaviour
         // Assign port
         transform.name = ObjectNames.ModdingFrameworkName;
         gameObject.name = ObjectNames.ModdingFrameworkName;
-        port = gameObject.AddComponent<IMCPort>();
-        port.RegisterReceiveListener<ModConfigMF>(MethodNames.RegisterMod, RegisterModHandler);
+        Port = gameObject.AddComponent<IMCPort>();
+        Port.RegisterReceiveListener<ModConfigMF>(MethodNames.RegisterMod, RegisterModHandler);
 
         // How to know which mods use ModConfig?
         // TODO question above
+        // Perhaps ping them all?
+        // Check that they have an XML file? Will KC uploader even allow non-.cs files?
+        // Can check they have file using console? Make it error with a certain error code for has-file and another for has-no-file
 
         // Register all loaded mods
         for (int i = 0; i < ModConfigs.Count(); i++)
         {
             ModConfigMF mod = ModConfigs[i];
-            try
-            {
-                RegisterMod(ref mod);
-                handler.SendResponse(port.gameObject.name, $"Successfully registered mod from {port.gameObject.name}");
-            }
-            catch (Exception e)
-            {
-                ULogger.Log(cat, $"Failed to register mod {source}\n");
-                ULogger.Log(cat, e);
-                handler.SendError(port.gameObject.name, e);
-            }
+            RegisterMod(ref mod);
+        }
+
+        // Tell all mods what has been registered
+        foreach(ModConfigMF modConfig in ModConfigs)
+        {
+            IMCMessage message = IMCMessage.CreateRequest(this.name, "ModsRegistered");
+            IMCRequestHandler handler = new IMCRequestHandler(message);
+            handler.SendResponse<List<ModConfigMF>>(this.name, ModConfigs);
         }
     }
     #endregion
     
+    /// <summary>
+    /// Receives the name of ModdedResourceType to then send to the mod that requested it.
+    /// TODO or can two way be done????
+    /// </summary>
+    /// <param name="handler"></param>
+    /// <param name="source"></param>
+    /// <param name="resourceName"></param>
+    private void GetAssignedResourceTypes(IRequestHandler handler, string source)
+    {
+
+    }
+
+    /// <summary>
+    /// Registers the mod with the KCModdingFramework
+    /// </summary>
+    /// <param name="handler"></param>
+    /// <param name="source"></param>
+    /// <param name="mod"></param>
     private void RegisterModHandler(IRequestHandler handler, string source, ModConfigMF mod)
     {
         ULogger.Log(cat, $"Received message from {source}");
@@ -252,7 +275,7 @@ public class ModdingFramework : MonoBehaviour
         {
             _ = IMCMessage.CreateRequest(
                 ObjectNames.ModdingFrameworkName,
-                ModConfigMF,
+                ModConfigMF.ModName,
                 JsonConvert.SerializeObject(ModConfigMF, IMCPort.serializerSettings));
         }
         catch (Exception e)
@@ -268,7 +291,7 @@ public class ModdingFramework : MonoBehaviour
         {
             try
             {
-                RegisterResource(moddedResourceType, ModConfigMF.AssetBundles);
+                RegisterResource(moddedResourceType);
             }
             catch (Exception e)
             {
@@ -316,12 +339,12 @@ public class ModdingFramework : MonoBehaviour
     /// <param name="moddedResourceType"></param>
     /// <param name="assetBundle"></param>
     /// <returns></returns>
-    private void RegisterResource(ModdedResourceType moddedResourceType, AssetBundle assetBundle)
+    private void RegisterResource(ModdedResourceType moddedResourceType)
     {
         ULogger.Log($"Registering ModdedResourceType: {moddedResourceType}");
 
         // Not loaded earlier as breaks JSON encoding
-        moddedResourceType.Model = assetBundle.LoadAsset(moddedResourceType.AssetBundlePath) as GameObject;
+        moddedResourceType.LoadModel();
         
         AssignModdedResourceType(ref moddedResourceType);
     }
@@ -367,6 +390,16 @@ public class ModdingFramework : MonoBehaviour
     {
         // For mod A to use resource from mod B via ModdingFramework
         return RegisteredModdedResourceTypes.Where(mrt => mrt.Name.ToLowerInvariant() == name.ToLowerInvariant()).FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Gets a RegisteredModdedResource by its ResourceType. Will return emtpy object is one is not found.
+    /// </summary>
+    /// <param name="resourceType"></param>
+    /// <returns></returns>
+    public ModdedResourceType GetModdedResourceType(ResourceType resourceType)
+    {
+        return RegisteredModdedResourceTypes.Where(mrt => mrt.ResourceType == resourceType).FirstOrDefault();
     }
 
     /// <summary>

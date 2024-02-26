@@ -1,11 +1,14 @@
-﻿public static class Debugging
+﻿namespace Zat.Debugging
 {
-    public static bool Active { get; set; }
-    public static KCModHelper Helper { get; set; }
-
-    public static void Log(string category, string content)
+    public static class Debugging
     {
-        if (Helper == null || !Active) return;
-        Helper.Log($"[{category}] {content}");
+        public static bool Active { get; set; }
+        public static KCModHelper Helper { get; set; }
+
+        public static void Log(string category, string content)
+        {
+            if (Helper == null || !Active) return;
+            Helper.Log($"[{category}] {content}");
+        }
     }
 }

@@ -20,11 +20,485 @@
         <HintPath>..\..\Harmony.2.2.2.0\net45\0Harmony.dll</HintPath>
       </Reference>
       <Reference Include="Assembly-CSharp">
-        <HintPath>..\..\Assembly-CSharp.dll</HintPath>
+        <HintPath>..\..\KC_Assembly-CSharp\Assembly-CSharp.dll</HintPath>
+      </Reference>
+      <Reference Include="Assembly-CSharp-firstpass">
+        <HintPath>..\..\KC_Assembly-CSharp\Assembly-CSharp-firstpass.dll</HintPath>
+      </Reference>
+      <Reference Include="com.rlabrecque.steamworks.net">
+        <HintPath>..\..\KC_Assembly-CSharp\com.rlabrecque.steamworks.net.dll</HintPath>
+      </Reference>
+      <Reference Include="crosstales">
+        <HintPath>..\..\KC_Assembly-CSharp\crosstales.dll</HintPath>
+      </Reference>
+      <Reference Include="GalaxyCSharp">
+        <HintPath>..\..\KC_Assembly-CSharp\GalaxyCSharp.dll</HintPath>
+      </Reference>
+      <Reference Include="I18N">
+        <HintPath>..\..\KC_Assembly-CSharp\I18N.dll</HintPath>
+      </Reference>
+      <Reference Include="I18N.CJK">
+        <HintPath>..\..\KC_Assembly-CSharp\I18N.CJK.dll</HintPath>
+      </Reference>
+      <Reference Include="I18N.MidEast">
+        <HintPath>..\..\KC_Assembly-CSharp\I18N.MidEast.dll</HintPath>
+      </Reference>
+      <Reference Include="I18N.Other">
+        <HintPath>..\..\KC_Assembly-CSharp\I18N.Other.dll</HintPath>
+      </Reference>
+      <Reference Include="I18N.Rare">
+        <HintPath>..\..\KC_Assembly-CSharp\I18N.Rare.dll</HintPath>
+      </Reference>
+      <Reference Include="I18N.West">
+        <HintPath>..\..\KC_Assembly-CSharp\I18N.West.dll</HintPath>
+      </Reference>
+      <Reference Include="ICSharpCode.SharpZipLib">
+        <HintPath>..\..\KC_Assembly-CSharp\ICSharpCode.SharpZipLib.dll</HintPath>
+      </Reference>
+      <Reference Include="Ionic.Zip">
+        <HintPath>..\..\KC_Assembly-CSharp\Ionic.Zip.dll</HintPath>
+      </Reference>
+      <Reference Include="Microsoft.CodeAnalysis">
+        <HintPath>..\..\KC_Assembly-CSharp\Microsoft.CodeAnalysis.dll</HintPath>
+      </Reference>
+      <Reference Include="Microsoft.CodeAnalysis.CSharp">
+        <HintPath>..\..\KC_Assembly-CSharp\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+      </Reference>
+      <Reference Include="Mono.Posix">
+        <HintPath>..\..\KC_Assembly-CSharp\Mono.Posix.dll</HintPath>
+      </Reference>
+      <Reference Include="Mono.Security">
+        <HintPath>..\..\KC_Assembly-CSharp\Mono.Security.dll</HintPath>
+      </Reference>
+      <Reference Include="Newtonsoft.Json">
+        <HintPath>..\..\KC_Assembly-CSharp\Newtonsoft.Json.dll</HintPath>
+      </Reference>
+      <Reference Include="Rewired_Core">
+        <HintPath>..\..\KC_Assembly-CSharp\Rewired_Core.dll</HintPath>
+      </Reference>
+      <Reference Include="Rewired_Windows">
+        <HintPath>..\..\KC_Assembly-CSharp\Rewired_Windows.dll</HintPath>
+      </Reference>
+      <Reference Include="RoslynCSharp">
+        <HintPath>..\..\KC_Assembly-CSharp\RoslynCSharp.dll</HintPath>
+      </Reference>
+      <Reference Include="RoslynCSharp.Compiler">
+        <HintPath>..\..\KC_Assembly-CSharp\RoslynCSharp.Compiler.dll</HintPath>
+      </Reference>
+      <Reference Include="RoslynCSharp.Examples">
+        <HintPath>..\..\KC_Assembly-CSharp\RoslynCSharp.Examples.dll</HintPath>
+      </Reference>
+      <Reference Include="SteamVR">
+        <HintPath>..\..\KC_Assembly-CSharp\SteamVR.dll</HintPath>
+      </Reference>
+      <Reference Include="SteamVR_Actions">
+        <HintPath>..\..\KC_Assembly-CSharp\SteamVR_Actions.dll</HintPath>
+      </Reference>
+      <Reference Include="System.AppContext">
+        <HintPath>..\..\KC_Assembly-CSharp\System.AppContext.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Collections">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Collections.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Collections.Concurrent">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Collections.Concurrent.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Collections.Immutable">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Collections.Immutable.dll</HintPath>
+      </Reference>
+      <Reference Include="System.ComponentModel.Composition">
+        <HintPath>..\..\KC_Assembly-CSharp\System.ComponentModel.Composition.dll</HintPath>
       </Reference>
       <Reference Include="System.Configuration" />
+      <Reference Include="System.Console">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Console.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Diagnostics.Debug">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Diagnostics.Debug.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Diagnostics.FileVersionInfo">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Diagnostics.FileVersionInfo.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Diagnostics.StackTrace">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Diagnostics.StackTrace.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Diagnostics.Tools">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Diagnostics.Tools.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Globalization">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Globalization.dll</HintPath>
+      </Reference>
+      <Reference Include="System.IO">
+        <HintPath>..\..\KC_Assembly-CSharp\System.IO.dll</HintPath>
+      </Reference>
+      <Reference Include="System.IO.Compression">
+        <HintPath>..\..\KC_Assembly-CSharp\System.IO.Compression.dll</HintPath>
+      </Reference>
+      <Reference Include="System.IO.FileSystem">
+        <HintPath>..\..\KC_Assembly-CSharp\System.IO.FileSystem.dll</HintPath>
+      </Reference>
+      <Reference Include="System.IO.FileSystem.Primitives">
+        <HintPath>..\..\KC_Assembly-CSharp\System.IO.FileSystem.Primitives.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Linq">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Linq.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Linq.Expressions">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Linq.Expressions.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Reflection">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Reflection.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Reflection.Extensions">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Reflection.Extensions.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Reflection.Metadata">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Reflection.Metadata.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Reflection.Primitives">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Reflection.Primitives.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Resources.ResourceManager">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Resources.ResourceManager.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Runtime">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Runtime.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Runtime.Extensions">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Runtime.Extensions.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Runtime.InteropServices">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Runtime.InteropServices.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Runtime.Numerics">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Runtime.Numerics.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Security">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Security.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Security.Cryptography.Algorithms">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Security.Cryptography.Algorithms.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Security.Cryptography.Encoding">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Security.Cryptography.Encoding.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Security.Cryptography.Primitives">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Security.Cryptography.Primitives.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Security.Cryptography.X509Certificates">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Security.Cryptography.X509Certificates.dll</HintPath>
+      </Reference>
+      <Reference Include="System.ServiceModel.Internals">
+        <HintPath>..\..\KC_Assembly-CSharp\System.ServiceModel.Internals.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Text.Encoding">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Text.Encoding.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Text.Encoding.CodePages">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Text.Encoding.CodePages.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Text.Encoding.Extensions">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Text.Encoding.Extensions.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Threading">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Threading.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Threading.Tasks">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Threading.Tasks.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Threading.Tasks.Extensions">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Threading.Tasks.Extensions.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Threading.Tasks.Parallel">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Threading.Tasks.Parallel.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Threading.Thread">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Threading.Thread.dll</HintPath>
+      </Reference>
+      <Reference Include="System.ValueTuple">
+        <HintPath>..\..\KC_Assembly-CSharp\System.ValueTuple.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Xml.ReaderWriter">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Xml.ReaderWriter.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Xml.XDocument">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Xml.XDocument.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Xml.XmlDocument">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Xml.XmlDocument.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Xml.XPath">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Xml.XPath.dll</HintPath>
+      </Reference>
+      <Reference Include="System.Xml.XPath.XDocument">
+        <HintPath>..\..\KC_Assembly-CSharp\System.Xml.XPath.XDocument.dll</HintPath>
+      </Reference>
+      <Reference Include="Tilia.CameraRigs.SpatialSimulator.Unity.Runtime">
+        <HintPath>..\..\KC_Assembly-CSharp\Tilia.CameraRigs.SpatialSimulator.Unity.Runtime.dll</HintPath>
+      </Reference>
+      <Reference Include="Tilia.CameraRigs.TrackedAlias.Unity.Runtime">
+        <HintPath>..\..\KC_Assembly-CSharp\Tilia.CameraRigs.TrackedAlias.Unity.Runtime.dll</HintPath>
+      </Reference>
+      <Reference Include="Tilia.CameraRigs.XRPluginFramework.Unity.Runtime">
+        <HintPath>..\..\KC_Assembly-CSharp\Tilia.CameraRigs.XRPluginFramework.Unity.Runtime.dll</HintPath>
+      </Reference>
+      <Reference Include="Tilia.Indicators.ObjectPointers.Unity.Runtime">
+        <HintPath>..\..\KC_Assembly-CSharp\Tilia.Indicators.ObjectPointers.Unity.Runtime.dll</HintPath>
+      </Reference>
+      <Reference Include="Tilia.Indicators.SpatialTargets.Unity.Runtime">
+        <HintPath>..\..\KC_Assembly-CSharp\Tilia.Indicators.SpatialTargets.Unity.Runtime.dll</HintPath>
+      </Reference>
+      <Reference Include="Tilia.Input.CombinedActions.Unity.Runtime">
+        <HintPath>..\..\KC_Assembly-CSharp\Tilia.Input.CombinedActions.Unity.Runtime.dll</HintPath>
+      </Reference>
+      <Reference Include="Tilia.Input.UnityInputManager.Runtime">
+        <HintPath>..\..\KC_Assembly-CSharp\Tilia.Input.UnityInputManager.Runtime.dll</HintPath>
+      </Reference>
+      <Reference Include="Tilia.Interactions.Interactables.Unity.Runtime">
+        <HintPath>..\..\KC_Assembly-CSharp\Tilia.Interactions.Interactables.Unity.Runtime.dll</HintPath>
+      </Reference>
+      <Reference Include="Tilia.Interactions.SpatialButtons.Runtime">
+        <HintPath>..\..\KC_Assembly-CSharp\Tilia.Interactions.SpatialButtons.Runtime.dll</HintPath>
+      </Reference>
+      <Reference Include="Tilia.Locomotors.AxisMove.Unity.Runtime">
+        <HintPath>..\..\KC_Assembly-CSharp\Tilia.Locomotors.AxisMove.Unity.Runtime.dll</HintPath>
+      </Reference>
+      <Reference Include="Tilia.Locomotors.Teleporter.Unity.Runtime">
+        <HintPath>..\..\KC_Assembly-CSharp\Tilia.Locomotors.Teleporter.Unity.Runtime.dll</HintPath>
+      </Reference>
+      <Reference Include="Tilia.SDK.SteamVR.Unity.Runtime">
+        <HintPath>..\..\KC_Assembly-CSharp\Tilia.SDK.SteamVR.Unity.Runtime.dll</HintPath>
+      </Reference>
+      <Reference Include="Tilia.UnityUI">
+        <HintPath>..\..\KC_Assembly-CSharp\Tilia.UnityUI.dll</HintPath>
+      </Reference>
+      <Reference Include="Tilia.Visuals.Basichands.Unity.Runtime">
+        <HintPath>..\..\KC_Assembly-CSharp\Tilia.Visuals.Basichands.Unity.Runtime.dll</HintPath>
+      </Reference>
+      <Reference Include="Trivial.CodeSecurity">
+        <HintPath>..\..\KC_Assembly-CSharp\Trivial.CodeSecurity.dll</HintPath>
+      </Reference>
+      <Reference Include="Trivial.Mono.Cecil">
+        <HintPath>..\..\KC_Assembly-CSharp\Trivial.Mono.Cecil.dll</HintPath>
+      </Reference>
+      <Reference Include="Trivial.Mono.Cecil.Mdb">
+        <HintPath>..\..\KC_Assembly-CSharp\Trivial.Mono.Cecil.Mdb.dll</HintPath>
+      </Reference>
+      <Reference Include="Trivial.Mono.Cecil.Pdb">
+        <HintPath>..\..\KC_Assembly-CSharp\Trivial.Mono.Cecil.Pdb.dll</HintPath>
+      </Reference>
+      <Reference Include="Unity.Analytics.DataPrivacy">
+        <HintPath>..\..\KC_Assembly-CSharp\Unity.Analytics.DataPrivacy.dll</HintPath>
+      </Reference>
+      <Reference Include="Unity.Subsystem.Registration">
+        <HintPath>..\..\KC_Assembly-CSharp\Unity.Subsystem.Registration.dll</HintPath>
+      </Reference>
+      <Reference Include="Unity.TextMeshPro">
+        <HintPath>..\..\KC_Assembly-CSharp\Unity.TextMeshPro.dll</HintPath>
+      </Reference>
+      <Reference Include="Unity.XR.Management">
+        <HintPath>..\..\KC_Assembly-CSharp\Unity.XR.Management.dll</HintPath>
+      </Reference>
+      <Reference Include="Unity.XR.MockHMD">
+        <HintPath>..\..\KC_Assembly-CSharp\Unity.XR.MockHMD.dll</HintPath>
+      </Reference>
+      <Reference Include="Unity.XR.OpenVR">
+        <HintPath>..\..\KC_Assembly-CSharp\Unity.XR.OpenVR.dll</HintPath>
+      </Reference>
       <Reference Include="UnityEngine">
-        <HintPath>..\..\UnityEngine.dll</HintPath>
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.AccessibilityModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.AccessibilityModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.AIModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.AIModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.AndroidJNIModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.AndroidJNIModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.AnimationModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.AnimationModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.ARModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.ARModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.AssetBundleModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.AssetBundleModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.AudioModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.AudioModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.ClothModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.ClothModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.ClusterInputModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.ClusterInputModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.ClusterRendererModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.ClusterRendererModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.CoreModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.CoreModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.CrashReportingModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.CrashReportingModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.DirectorModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.DirectorModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.DSPGraphModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.DSPGraphModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.GameCenterModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.GameCenterModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.GridModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.GridModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.HotReloadModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.HotReloadModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.ImageConversionModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.ImageConversionModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.IMGUIModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.IMGUIModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.InputLegacyModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.InputLegacyModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.InputModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.InputModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.JSONSerializeModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.JSONSerializeModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.LocalizationModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.LocalizationModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.ParticleSystemModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.ParticleSystemModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.PerformanceReportingModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.PerformanceReportingModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.Physics2DModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.Physics2DModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.PhysicsModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.PhysicsModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.ProfilerModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.ProfilerModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.ScreenCaptureModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.ScreenCaptureModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.SharedInternalsModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.SharedInternalsModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.SpatialTracking">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.SpatialTracking.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.SpriteMaskModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.SpriteMaskModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.SpriteShapeModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.SpriteShapeModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.StreamingModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.StreamingModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.SubstanceModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.SubstanceModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.SubsystemsModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.SubsystemsModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.TerrainModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.TerrainModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.TerrainPhysicsModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.TerrainPhysicsModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.TextCoreModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.TextCoreModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.TextRenderingModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.TextRenderingModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.TilemapModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.TilemapModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.TLSModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.TLSModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.UI">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.UI.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.UIElementsModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.UIElementsModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.UIModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.UIModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.UmbraModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.UmbraModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.UNETModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.UNETModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.UnityAnalyticsModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.UnityAnalyticsModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.UnityConnectModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.UnityConnectModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.UnityTestProtocolModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.UnityTestProtocolModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.UnityWebRequestAssetBundleModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.UnityWebRequestAssetBundleModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.UnityWebRequestAudioModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.UnityWebRequestModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.UnityWebRequestModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.UnityWebRequestTextureModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.UnityWebRequestTextureModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.UnityWebRequestWWWModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.UnityWebRequestWWWModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.VehiclesModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.VehiclesModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.VFXModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.VFXModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.VideoModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.VideoModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.VRModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.VRModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.WindModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.WindModule.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.XR.LegacyInputHelpers">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.XR.LegacyInputHelpers.dll</HintPath>
+      </Reference>
+      <Reference Include="UnityEngine.XRModule">
+        <HintPath>..\..\KC_Assembly-CSharp\UnityEngine.XRModule.dll</HintPath>
+      </Reference>
+      <Reference Include="Valve.Newtonsoft.Json">
+        <HintPath>..\..\KC_Assembly-CSharp\Valve.Newtonsoft.Json.dll</HintPath>
+      </Reference>
+      <Reference Include="Zinnia.Runtime">
+        <HintPath>..\..\KC_Assembly-CSharp\Zinnia.Runtime.dll</HintPath>
       </Reference>
     </ItemGroup>
 

@@ -26,12 +26,12 @@ namespace KaC_Modding_Engine_API.HarmonyPatches
                 helper.Log($"POSTFIXING \"Unpack\" with seed {__result.seed}");
 
                 // Create generator to be able to use it's methods
-                List<ModdedResourceType> resourceTypeBases = new List<ModdedResourceType>();
-                foreach (ModdedResourceType generatorBase in ModdingFramework.Inst.Generators)
+                List<ModdedResourceType> moddedResourceTypes = new List<ModdedResourceType>();
+                foreach (GeneratorBase generatorBase in ModdingFramework.Inst.Generators)
                 {
-                    resourceTypeBases.AddRange(generatorBase.Resources);
+                    moddedResourceTypes.AddRange(generatorBase.Resources);
                 }
-                if (resourceTypeBases.Count() == 0) return;
+                if (moddedResourceTypes.Count() == 0) return;
 
                 Cell[] cellData = GetCellData(world);
                 Cell.CellSaveData[] cellSaveData =
@@ -53,11 +53,11 @@ namespace KaC_Modding_Engine_API.HarmonyPatches
                     helper.Log($"Cell {cell.x}, {cell.z} is: {cell.Type}");
 
                     // This is the equivalent of World.SetupStoneForCell
-                    ModdedResourceType currentResourceTypeBase = ModdingFramework.Inst.GetResourceTypeBase(cell.Type);
-                    GeneratorBase.TryPlaceResource(cell, currentResourceTypeBase, deleteTrees: false,
+                    ModdedResourceType currentModdedResourceType = ModdingFramework.Inst.GetModdedResourceType(cell.Type);
+                    GeneratorBase.TryPlaceResource(cell, currentModdedResourceType, deleteTrees: false,
                         storePostGenerationType: true);
 
-                    helper.Log($"Set Cell to {currentResourceTypeBase}");
+                    helper.Log($"Set Cell to {currentModdedResourceType}");
                 }
 
                 SetCellData(world, cellData);

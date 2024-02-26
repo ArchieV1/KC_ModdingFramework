@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 using static KaC_Modding_Engine_API.Tools.Tools;
 
 namespace KaC_Modding_Engine_API.Objects.Resources
@@ -18,7 +19,7 @@ namespace KaC_Modding_Engine_API.Objects.Resources
         /// <summary>
         /// The model this resources uses in the game world
         /// </summary>
-        public GameObject Model { get; }
+        public GameObject Model { get; private set; }
 
         /// <summary>
         /// The path of the AssetBundle
@@ -33,7 +34,7 @@ namespace KaC_Modding_Engine_API.Objects.Resources
         /// <summary>
         /// The AssetBundle
         /// </summary>
-        public AssetBundle AssetBundle { get; }
+        public AssetBundle AssetBundle { get; private set; }
 
         /// <summary>
         /// If the Model is loaded

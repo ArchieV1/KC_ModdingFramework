@@ -2,6 +2,7 @@
 using KaC_Modding_Engine_API.Objects.Resources;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace KaC_Modding_Engine_API.Objects.ModConfig
 {
@@ -32,6 +33,11 @@ namespace KaC_Modding_Engine_API.Objects.ModConfig
         public ICollection<AssetBundle> AssetBundles { get; set; }
 
         /// <summary>
+        /// Gets or sets the dependencies of this mod. Defined by the <see cref="ModName"/> of the mods.
+        /// </summary>
+        public IEnumerable<string> Dependencies { get; set; }
+
+        /// <summary>
         /// If this mod has been registered with the KCModdingFramework.
         /// Should be `false` when it is sent and `true` when received.
         /// </summary>
@@ -46,11 +52,11 @@ namespace KaC_Modding_Engine_API.Objects.ModConfig
         /// All of the ModdedResourceTypes this Mod's <see cref="Generators"/> will use. (And <see cref="ExtraModdedResourceTypes"/>)
         /// This is calculated by reading the Generators. A ResourceType can be used by multiple generators.
         /// </summary>
-        public ICollection<ModdedResourceType> ModdedResourceTypes
+        public IEnumerable<ModdedResourceType> ModdedResourceTypes
         {
             get
             {
-                return Generators.SelectMany(g => g.Resources).Distinct().Union(ExtraModdedResourceTypes);
+                return Generators.SelectMany(g => g.Resources).Union(ExtraModdedResourceTypes).Distinct();
             }
         }
 

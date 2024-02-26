@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
+using Zat.Debugging;
 
 namespace KaC_Modding_Engine_API.Objects.Generators
 {
@@ -49,7 +51,7 @@ namespace KaC_Modding_Engine_API.Objects.Generators
             //TODO check that this is true and doesnt just say "GeneratorBase"
             Name = GetType().ToString(); // The name of the class derived from this
             Guid = Guid.NewGuid();
-            Resources = moddedResourceTypes;
+            Resources = moddedResourceTypes.ToList();
 
             ULogger.Log($"Generation", $"Created {Name}");
         }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using KaC_Modding_Engine_API.Objects.Resources;
+using static KaC_Modding_Engine_API.Tools.Tools;
 
 namespace KaC_Modding_Engine_API.Objects.Generators
 {
@@ -95,7 +96,7 @@ namespace KaC_Modding_Engine_API.Objects.Generators
             ArrayExt<Cell>[] array = new ArrayExt<Cell>[world.NumLandMasses];
             for (int k = 0; k < world.NumLandMasses; k++)
             {
-                Cell[] cellData = (Cell[])Tools.GetPrivateWorldField(world, "cellData", fieldIsStatic: false);
+                Cell[] cellData = (Cell[])GetPrivateWorldField(world, "cellData", fieldIsStatic: false);
                 array[k] = new ArrayExt<Cell>(cellData.Length);
                 for (int l = 0; l < world.cellsToLandmass[k].Count; l++)
                 {
@@ -157,10 +158,10 @@ namespace KaC_Modding_Engine_API.Objects.Generators
                             switch (_largeFeature)
                             {
                                 case true:
-                                    flag = Tools.PlaceLargeStoneFeature(world, cell, _resourceTypeBases[0].ResourceType, _resourceTypeBases[1].ResourceType, 60, 35);
+                                    flag = PlaceLargeStoneFeature(world, cell, _resourceTypeBases[0].ResourceType, _resourceTypeBases[1].ResourceType, 60, 35);
                                     break;
                                 default:
-                                    flag = Tools.PlaceSmallStoneFeature(world, cell, _resourceTypeBases[0].ResourceType, _resourceTypeBases[0].ResourceType, 60, 35);
+                                    flag = PlaceSmallStoneFeature(world, cell, _resourceTypeBases[0].ResourceType, _resourceTypeBases[0].ResourceType, 60, 35);
                                     break;
                             }
 
