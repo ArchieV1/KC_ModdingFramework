@@ -15,7 +15,6 @@ using KaC_Modding_Engine_API.Names;
 using Zat.InterModComm;
 using Zat.Debugging;
 using static KaC_Modding_Engine_API.Objects.Resources.VanillaModdedResourceTypes;
-using System.Runtime.Remoting.Messaging;
 
 public class ModdingFramework : MonoBehaviour
 {
@@ -204,36 +203,56 @@ public class ModdingFramework : MonoBehaviour
         // How to know which mods use ModConfig?
         // TODO question above
         // Perhaps ping them all?
-        // Check that they have an XML file? Will KC uploader even allow non-.cs files?
+        // Check that they have an XML file? Will KC mod uploader even allow non-.cs files?
         // Can check they have file using console? Make it error with a certain error code for has-file and another for has-no-file
 
+        // Calculate ModLoadOrder
+        List<List<ModConfigMF>> modLoadOrder = (List<List<ModConfigMF>>)GenerateModLoadOrder();
+
         // Register all loaded mods
-        for (int i = 0; i < ModConfigs.Count(); i++)
+        for (int i = 0; i < modLoadOrder.Count(); i++)
         {
-            ModConfigMF mod = ModConfigs[i];
-            RegisterMod(ref mod);
+            IEnumerable<ModConfigMF> loadRound = modLoadOrder[i];
+            for (int j = 0; j < loadRound.Count(); j++)
+            {
+                ModConfigMF mod = ModConfigs[j];
+                RegisterMod(ref mod);
+            }
+
         }
 
         // Tell all mods what has been registered
         foreach(ModConfigMF modConfig in ModConfigs)
         {
-            IMCMessage message = IMCMessage.CreateRequest(this.name, "ModsRegistered");
-            IMCRequestHandler handler = new IMCRequestHandler(message);
-            handler.SendResponse<List<ModConfigMF>>(this.name, ModConfigs);
+            // TODO this should probably be a StartCoroutine() sort of thing
+            SendAllModsRegistered(modConfig);
         }
     }
     #endregion
     
     /// <summary>
-    /// Receives the name of ModdedResourceType to then send to the mod that requested it.
-    /// TODO or can two way be done????
+    /// Sends <see cref="MethodNames.AllModsRegistered"/> message to the given mod.
     /// </summary>
-    /// <param name="handler"></param>
-    /// <param name="source"></param>
-    /// <param name="resourceName"></param>
-    private void GetAssignedResourceTypes(IRequestHandler handler, string source)
+    /// <param name="targetMod"></param>
+    /// <param name="retries">Number of times to attempt to send this message.</param>
+    private void SendAllModsRegistered(ModConfigMF targetMod, int retries = 5)
     {
-
+        Port.RPC<ICollection<ModConfigMF>>(targetMod.ModName, MethodNames.AllModsRegistered, ModConfigs, 3f, () =>
+        {
+            ULogger.Log(cat, $"Successfully sent '{MethodNames.AllModsRegistered}' message to '{targetMod.ModName}'");
+        },
+        (error) =>
+        {
+            if (retries > 0)
+            {
+                SendAllModsRegistered(targetMod, retries - 1);
+            }
+            else
+            {
+                ULogger.Log(cat, $"Unable to send '{MethodNames.AllModsRegistered}' message to '{targetMod.ModName}'");
+                ULogger.Log(cat, targetMod);
+            }
+        });
     }
 
     /// <summary>
@@ -403,7 +422,7 @@ public class ModdingFramework : MonoBehaviour
     }
 
     /// <summary>
-    /// Logs everything about ModdingFramework
+    /// Logs everything about ModdingFramework.
     /// </summary>
     public void LogDump()
     {
@@ -435,6 +454,115 @@ public class ModdingFramework : MonoBehaviour
         ULogger.Log($"OTHER:");
         ULogger.Log($"{nameof(Helper)}: {Helper} (Should be registered in Preload)");
         ULogger.Log("=========END DUMP=========");
+    }
+
+    /// <summary>
+    /// Logs the dependencies of all <see cref="ModConfigs"/>.
+    /// </summary>
+    public void LogModDependencies()
+    {
+        ULogger.Log(cat, "Mod Dependencies. Open using:");
+        ULogger.Log(cat, "https://omute.net/editor");
+        ULogger.Log(cat, GenerateModDependencyTree());
+    }
+
+    /// <summary>
+    /// Creates dependency tree as JSON for use in: https://omute.net/editor
+    /// </summary>
+    /// <returns></returns>
+    public string GenerateModDependencyTree()
+    {
+        ICollection<ModConfigMF> modConfigs = this.ModConfigs;
+        modConfigs.Add(new ModConfigMF() { ModName = this.name });
+
+        modConfigs.Select(mc => new ModDependency(ModConfigs, mc));
+
+        return JsonConvert.SerializeObject(modConfigs);
+    }
+
+    /// <summary>
+    /// Calculates the mod load order based on dependencies.
+    /// A List of Lists will be returned with the first value being the first to be loaded.
+    /// The order of mods inside of the inner list does not matter for loading order though is alphabetical by <see cref="ModConfigMF.ModName"/>.
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerable<IEnumerable<ModConfigMF>> GenerateModLoadOrder()
+    {
+        // TODO this 100% allows infinite issues
+        List<ModConfigMF> notAttemptedToLoad = ModConfigs;
+        List<ModConfigMF> loaded = new List<ModConfigMF>();
+        // Each list is a "round of loading"
+        List<List<ModConfigMF>> loadOrderLists = new List<List<ModConfigMF>>();
+
+        // Counter is to stop this being infinite. ATM if there is an invalid name it will 100% error
+        int counter = 50;
+        while (notAttemptedToLoad.Count > 0 && counter > 0)
+        {
+            List<ModConfigMF> loadRound = new List<ModConfigMF>();
+
+            foreach (ModConfigMF modConfig in notAttemptedToLoad)
+            {
+                // If mod has all dependencies loaded. Add to to current round of to load.
+                if (!HasUnloadedDependencies(modConfig, loaded))
+                {
+                    loadRound.AddItem(modConfig);
+                    loaded.Add(modConfig);
+                    notAttemptedToLoad.Remove(modConfig); // TODO is this allowed in a foreach?
+                }
+            }
+
+            loadRound = loadRound.OrderBy(mc => mc.ModName).ToList();
+            loadOrderLists.AddItem(loadRound);
+            counter++;
+        }
+
+        return loadOrderLists;
+    }
+
+    /// <summary>
+    /// If the current given <paramref name="modConfig"/> has dependencies not included in <paramref name="loaded"/>.
+    /// </summary>
+    /// <param name="modConfig"></param>
+    /// <param name="loaded"></param>
+    /// <returns></returns>
+    private bool HasUnloadedDependencies(ModConfigMF modConfig, IEnumerable<ModConfigMF> loaded)
+    {
+        // No dependencies means it cannot have any that are not loaded
+        if (modConfig.Dependencies.Count() == 0)
+        {
+            return false;
+        }
+
+        // If modConfig has a dependency not currently inside of loaded. It has an unloaded dependency.
+        List<string> loadedModNames = loaded.SelectMany(l => l.Dependencies).ToList();
+        bool hasUnloaded = false;
+        foreach(string dependencyName in modConfig.Dependencies)
+        {
+            if (!loadedModNames.Contains(dependencyName))
+            {
+                hasUnloaded = true;
+            }
+        }
+
+        return hasUnloaded;
+    }
+
+    public class ModDependency
+    {
+        public string ModName { get; set; }
+
+        public IEnumerable<ModDependency> Dependencies { get; set; }
+
+        public ModDependency(ICollection<ModConfigMF> modConfigs, ModConfigMF modConfig)
+        {
+            ModName = modConfig.ModName;
+            Dependencies = modConfig.Dependencies.Select(mc => new ModDependency(modConfigs, modConfig));
+        }
+    }
+
+    public ModConfigMF GetModConfig(string modName)
+    {
+        return ModConfigs.Where(mc => mc.ModName.ToLowerInvariant() ==  modName.ToLowerInvariant()).FirstOrDefault();
     }
 }
 

@@ -13,13 +13,8 @@
         public static string RegisterMod => "RegisterMod";
 
         /// <summary>
-        /// Get list of all mods loaded by the modding framework
+        /// Should be listener to by mods to get information back about all of the mods that have been loaded.
         /// </summary>
-        public static string GetLoadedModList => "GetLoadedModList";
-
-        /// <summary>
-        /// Returns list of all assigned resource types
-        /// </summary>
-        public static string GetAssignedResourceTypes => "GetAssignedResourceTypes";
+        public static string AllModsRegistered => "AllModsRegistered";
     }
 }

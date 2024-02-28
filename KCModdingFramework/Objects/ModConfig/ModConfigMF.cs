@@ -1,5 +1,8 @@
-﻿using KaC_Modding_Engine_API.Objects.Generators;
+﻿using HarmonyLib;
+using KaC_Modding_Engine_API.Objects.Generators;
 using KaC_Modding_Engine_API.Objects.Resources;
+using KaC_Modding_Engine_API.Shared.ArchieV1;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -12,6 +15,11 @@ namespace KaC_Modding_Engine_API.Objects.ModConfig
     /// </summary>
     public class ModConfigMF
     {
+        /// <summary>
+        /// Name for logging from this ModConfigMF
+        /// </summary>
+        private string cat => $"ModConfigMF - {ModName}";
+
         /// <summary>
         /// The name of the mod.
         /// </summary>
@@ -34,12 +42,25 @@ namespace KaC_Modding_Engine_API.Objects.ModConfig
 
         /// <summary>
         /// Gets or sets the dependencies of this mod. Defined by the <see cref="ModName"/> of the mods.
+        /// Each dependency is lowercase and unique.
         /// </summary>
-        public IEnumerable<string> Dependencies { get; set; }
+        public IEnumerable<string> Dependencies
+        { 
+            get
+            {
+                return Dependencies ?? new List<string>(); ;
+            }
+            set 
+            {
+                IEnumerable<string> newDependencies = Dependencies.Union(value);
+                Dependencies = new List<string>();
+                this.AddDependencies(newDependencies); 
+            }
+        }
 
         /// <summary>
         /// If this mod has been registered with the KCModdingFramework.
-        /// Should be `false` when it is sent and `true` when received.
+        /// Should be `false` when it is sent to KCMF and `true` when returned.
         /// </summary>
         public bool Registered { get; set; } = false;
 
@@ -58,6 +79,88 @@ namespace KaC_Modding_Engine_API.Objects.ModConfig
             {
                 return Generators.SelectMany(g => g.Resources).Union(ExtraModdedResourceTypes).Distinct();
             }
+        }
+
+        /// <summary>
+        /// Adds given <paramref name="modName"/> to the <see cref="Dependencies"/> list.
+        /// Caps insensitive.
+        /// </summary>
+        /// <param name="modName">The modname to add.</param>
+        public void AddDependency(string modName)
+        {
+            if (string.IsNullOrEmpty(modName))
+            {
+                throw new ArgumentException("Dependency names cannot be null or empty");
+            }
+
+            modName = modName.ToLowerInvariant();
+
+            if (!Dependencies.Contains(modName))
+            {
+                Dependencies.AddItem(modName);
+                Dependencies = Dependencies.Distinct();
+            }
+            else
+            {
+                ULogger.Log(cat, $"Adding dependency {modName} though it was already added!");
+            }
+
+        }
+
+        /// <summary>
+        /// Adds name of <paramref name="modConfig"/> to the <see cref="Dependencies"/> list.
+        /// </summary>
+        /// <param name="modConfig">The modconfig to add.</param>
+        public void AddDependency(ModConfigMF modConfig)
+        {
+            AddDependency(modConfig.ModName);
+        }
+
+        /// <summary>
+        /// Adds all given <paramref name="modNames"/> to the <see cref="Dependencies"/> list.
+        /// </summary>
+        /// <param name="modConfig">The modNames to add.</param>
+        public void AddDependencies(IEnumerable<string> modNames)
+        {
+            foreach (string dependency in modNames)
+            {
+                AddDependency(dependency);
+            }
+        }
+
+        /// <summary>
+        /// Adds the names of all given <paramref name="dependencies"/> to the <see cref="Dependencies"/> list.
+        /// </summary>
+        /// <param name="modConfig">The modNames to add.</param>
+        public void AddDependencies(IEnumerable<ModConfigMF> dependencies)
+        {
+            foreach (ModConfigMF dependency in dependencies)
+            {
+                AddDependency(dependency);
+            }
+        }
+
+        /// <summary>
+        /// Removes the given <paramref name="modName"/> from the <see cref="Dependencies"/> list.
+        /// </summary>
+        /// <param name="modName">The name of the dependency to remove.</param>
+        [Obsolete("There is no reason I can think of to remove a dependency in code. Please reconsider if this is correct.")]
+        public void RemoveDependency(string modName)
+        {
+            List<string> dependenciesCopy = Dependencies.ToList();
+            dependenciesCopy.Remove(modName.ToLowerInvariant());
+
+            Dependencies = dependenciesCopy;
+        }
+
+        public bool IsDependency(string modName)
+        {
+            return Dependencies.Contains(modName.ToLowerInvariant());
+        }
+
+        public bool IsNotDependency(string modName)
+        {
+            return !IsDependency(modName);
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 using UnityEngine;
 using static KaC_Modding_Engine_API.Tools.Tools;
 
@@ -19,6 +20,7 @@ namespace KaC_Modding_Engine_API.Objects.Resources
         /// <summary>
         /// The model this resources uses in the game world
         /// </summary>
+        [JsonIgnore] // TODO unsure if needed
         public GameObject Model { get; private set; }
 
         /// <summary>
@@ -34,6 +36,7 @@ namespace KaC_Modding_Engine_API.Objects.Resources
         /// <summary>
         /// The AssetBundle
         /// </summary>
+        [JsonIgnore] // TODO unsure if needed
         public AssetBundle AssetBundle { get; private set; }
 
         /// <summary>
