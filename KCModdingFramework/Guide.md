@@ -1,8 +1,9 @@
 ﻿# Specification
-Most specifications will be defined in code and documented in comments. It will also be here though. *CODE SUPERSEDES COMMENTS WHICH SUPERSEDE THIS DOCUMENT*
+Most specifications will be defined in code and documented in comments. It will also be here though.
+*CODE SUPERSEDES COMMENTS WHICH SUPERSEDE THIS DOCUMENT*
 
 # ModdingFrameworkAPI
-The modding framework API contains the classes and methods needed for your mod to interact with the modding framework.
+The modding framework API folder contains the classes and methods needed for your mod to interact with the modding framework.
 
 ## ModdingFrameworkNames
 Contains strings that are the names of methods and objects needed to execute Remote Procedure Calls (RPCs) on the modding framework.  
@@ -74,7 +75,7 @@ When RegisterMod returns the ModConfigMF each `ResourceTypeBase` within will hav
 
 It should be implemented similarly to `GeneratorBase` as follows:
 ```c#
-GoldResource : BaseResourceType
+GoldResource : ModdedResourceType
 {
     public override Update()
     {
@@ -86,6 +87,7 @@ GoldResource : BaseResourceType
 # Future plans
 Future ideas include:
 * Test if map saving works properly
+* Implement generators
 * Implement `Fish` and `Whale` generators
 * Tooltips for `ResourceTypeBases` (Like in class `StoneUI`)
     * Check `GameUI.SelectCell`
@@ -99,20 +101,7 @@ Future ideas include:
     * Add ability for custom languages using standardised language codes
 * Add testing
 * Add testing for user made mods
-* Improve `Tools`
-  * Separate `Tools` into subclasses:
-    * `Tools.WorldEditor`
-    * `Tools.JSON`
-    * `Tools.Private`
-  
-* Organise `ModdingFrameworkAPI.cs` better
-  * `MF.Base` (Generator, ResourceType, Buildings etc etc)
-  * `MF.Tools`
-  * `MF.Default` (Or `Example`, `Sample`)
-  * `MF.ULogger`
 * Make code safer (Less likely to crash)
-* Implement `ModObject` as something to be loaded that supports many methods to be overrun
-  * Which methods? All of the ones other things use I guess
 
 # To decide
 * Instead of applying map edits _after_ the world is generated replace World.GenLand() with my own method
@@ -123,13 +112,10 @@ Future ideas include:
     * Pros: Simple to create, Simple to use
     * Cons: Modders would need to know what counts as an obstacle in other mods (Eg the game knows that Fertile isnt an issue so will place stone on top. How would modder know that "super fertile" is fine to place Gold on top of? A simple tick inside the resourceTypeBase class would prob fix that)
     * Unknown: Computation cost. Surely cheap?
-* Does `WolfDen` implement `Tick`? If yes add that to `ResourceTypeBase`
-* Does mod load order matter? If yes create queue and load alphabetically
-  * If doing this then all mods have to be able to receive messages no?
-  * Loading alphabetically would also be terrible. Better but terrible still
-    * Need to receive all mods and then create dependency tree (So all need unique ID) and then load in that order
+* Does `WolfDen` implement `Tick`? If yes add that to `ModdedResourceType`
+* Implement `ModObject` as something to be loaded that supports many methods to be overrun
+* Which methods? All of the ones other things use I guess
 * Not sure if it has advantage:
-  * Decide whether to make all base classes extend ModObject?
   * Split ModdingEngineAPI into multiple files?
     * API
       * ModdingFrameworkNames

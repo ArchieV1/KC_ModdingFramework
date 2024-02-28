@@ -1,0 +1,6 @@
+C:\Users\VannA\!Random\KC_ModdingFramework\KCModdingFramework\obj\Debug\net45\KCModdingFramework.csproj.AssemblyReference.cache
+C:\Users\VannA\!Random\KC_ModdingFramework\KCModdingFramework\obj\Debug\net45\KCModdingFramework.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\VannA\!Random\KC_ModdingFramework\KCModdingFramework\obj\Debug\net45\KCModdingFramework.AssemblyInfoInputs.cache
+C:\Users\VannA\!Random\KC_ModdingFramework\KCModdingFramework\obj\Debug\net45\KCModdingFramework.AssemblyInfo.cs
+C:\Users\VannA\!Random\KC_ModdingFramework\KCModdingFramework\obj\Debug\net45\KCModdingFramework.csproj.CoreCompileInputs.cache
+C:\Users\VannA\!Random\KC_ModdingFramework\KCModdingFramework\obj\Debug\net45\KCModdingFramework.sourcelink.json

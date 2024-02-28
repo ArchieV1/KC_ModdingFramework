@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using KaC_Modding_Engine_API.Objects.Generators;
 using KaC_Modding_Engine_API.Objects.ModConfig;
+using KaC_Modding_Engine_API.Tools;
 
 namespace KaC_Modding_Engine_API.HarmonyPatches
 {
@@ -23,7 +24,7 @@ namespace KaC_Modding_Engine_API.HarmonyPatches
             if (helper == null) return;
 
             helper.Log($"POSTFIXING \"GenLand\" with seed: {__instance.seed.ToString()}");
-            helper.Log("Calling methods: " + GetCallingMethodsAsString());
+            helper.Log("Calling methods: " + LoggingTools.GetCallingMethodsAsString());
 
             if (ModdingFramework.Inst.RegisteredModConfigs == null) return;
             foreach (ModConfigMF modConfig in ModdingFramework.Inst.RegisteredModConfigs)

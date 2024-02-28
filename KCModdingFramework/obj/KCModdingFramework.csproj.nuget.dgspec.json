@@ -1,0 +1,60 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\VannA\\!Random\\KC_ModdingFramework\\KCModdingFramework\\KCModdingFramework.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\VannA\\!Random\\KC_ModdingFramework\\KCModdingFramework\\KCModdingFramework.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\VannA\\!Random\\KC_ModdingFramework\\KCModdingFramework\\KCModdingFramework.csproj",
+        "projectName": "KCModdingFramework",
+        "projectPath": "C:\\Users\\VannA\\!Random\\KC_ModdingFramework\\KCModdingFramework\\KCModdingFramework.csproj",
+        "packagesPath": "C:\\Users\\VannA\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\VannA\\!Random\\KC_ModdingFramework\\KCModdingFramework\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\VannA\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net45"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {},
+          "https://innovation-group.pkgs.visualstudio.com/_packaging/IG-Packages/nuget/v3/index.json": {}
+        },
+        "frameworks": {
+          "net45": {
+            "targetAlias": "net45",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net45": {
+          "targetAlias": "net45",
+          "dependencies": {
+            "Microsoft.NETFramework.ReferenceAssemblies": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.0.3, )",
+              "autoReferenced": true
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.101\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

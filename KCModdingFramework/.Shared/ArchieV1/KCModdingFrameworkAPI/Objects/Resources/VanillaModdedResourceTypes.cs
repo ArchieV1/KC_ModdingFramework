@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KaC_Modding_Engine_API.Tools;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using static KaC_Modding_Engine_API.Tools.Tools;
@@ -23,11 +24,12 @@ namespace KaC_Modding_Engine_API.Objects.Resources
                 {
                     ResourceType = dr
                 };
+                PrivateFieldTools.
 
-                // This sets fields with reflection so that the fields can be left as readonly
-                // Do not want users of the mod setting these so making it awkward will solve that
-                SetPrivateField(rtb, "Name", Enum.GetName(typeof(ResourceType), dr));
-                SetPrivateField(rtb, "DefaultResource", true);
+                                // This sets fields with reflection so that the fields can be left as readonly
+                                // Do not want users of the mod setting these so making it awkward will solve that
+                                SetPrivateField(rtb, "Name", Enum.GetName(typeof(ResourceType), dr));
+                PrivateFieldTools.SetPrivateField(rtb, "DefaultResource", true);
 
                 return rtb;
             });

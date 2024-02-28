@@ -6,7 +6,26 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Compile Include=".Shared\ArchieV1\ULogger.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Exceptions\PlacementFailedException.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Names\MethodNames.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Names\ObjectNames.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Generators\EmptyCaveLikeGenerator.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Generators\FishLikeGenerator.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Generators\GeneratorBase.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Generators\StoneLikeGenerator.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Generators\WitchHutLikeGenerator.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Generators\WoodLikeGenerator.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\ModConfig\ModConfigMF.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\ModdedResourceType.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\ResourceDestructionMethods.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaModdedResourceTypes.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResources.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Tools\JsonTools.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Tools\LoggingTools.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Tools\PrivateFieldTools.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Tools\Tools.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Tools\WorldTools.cs" />
+      <Compile Include=".Shared\ArchieV1\ULogger\ULogger.cs" />
       <Compile Include=".Shared\Zat\Zat.Debugging.cs" />
       <Compile Include=".Shared\Zat\Zat.InterModComm.cs" />
     </ItemGroup>

@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using KaC_Modding_Engine_API.Objects.Generators;
 using KaC_Modding_Engine_API.Objects.Resources;
+using KaC_Modding_Engine_API.Tools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,9 +34,9 @@ namespace KaC_Modding_Engine_API.HarmonyPatches
                 }
                 if (moddedResourceTypes.Count() == 0) return;
 
-                Cell[] cellData = GetCellData(world);
+                Cell[] cellData = WorldTools.GetCellData(world);
                 Cell.CellSaveData[] cellSaveData =
-                    (Cell.CellSaveData[])GetPrivateWorldField(world, "cellSaveData");
+                    (Cell.CellSaveData[])WorldTools.GetPrivateWorldField(world, "cellSaveData");
                 bool hasDeepWater = false;
 
                 for (int i = 0; i < cellData.Length - 1; i++)
@@ -60,7 +61,8 @@ namespace KaC_Modding_Engine_API.HarmonyPatches
                     helper.Log($"Set Cell to {currentModdedResourceType}");
                 }
 
-                SetCellData(world, cellData);
+                WorldTools.
+                                SetCellData(world, cellData);
                 helper.Log("Finished patching Unpack");
             }
             catch (Exception e)

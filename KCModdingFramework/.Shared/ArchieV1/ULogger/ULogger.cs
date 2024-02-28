@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KaC_Modding_Engine_API.Tools;
+using System;
 using System.Text.RegularExpressions;
 using static KaC_Modding_Engine_API.Tools.Tools;
 
@@ -46,7 +47,7 @@ namespace KaC_Modding_Engine_API.Shared.ArchieV1
             }
             else
             {
-                Log(GetCallingNamespace(2), message);
+                Log(LoggingTools.GetCallingNamespace(2), message);
             }
         }
 
