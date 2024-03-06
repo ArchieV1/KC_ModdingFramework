@@ -1,5 +1,7 @@
 REM This will only work on Windows (Untested)
 REM Another script is needed for Unix-Like
+
+REM TODO does not find locally installed mods. Just steam mods
 @echo off
 setlocal enabledelayedexpansion
 set "game_id=569480"
