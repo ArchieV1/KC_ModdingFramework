@@ -15,6 +15,9 @@ using KaC_Modding_Engine_API.Names;
 using Zat.InterModComm;
 using Zat.Debugging;
 using static KaC_Modding_Engine_API.Objects.Resources.VanillaModdedResourceTypes;
+using System.Diagnostics;
+using Crosstales.Common.Util;
+using System.Text;
 
 public class ModdingFramework : MonoBehaviour
 {
@@ -563,6 +566,73 @@ public class ModdingFramework : MonoBehaviour
     public ModConfigMF GetModConfig(string modName)
     {
         return ModConfigs.Where(mc => mc.ModName.ToLowerInvariant() ==  modName.ToLowerInvariant()).FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Generates a list of all mods with whether they support KCMF or not.
+    /// TODO CURRENTLY WINDOWS ONLY
+    /// </summary>
+    /// <returns>Dictionary of: ModDirectory:UsesKCMF</returns>
+    public Dictionary<string, bool> GeneratePossibleModList()
+    {
+        // Checks if mods support KCModdingFramework by running CMD to check if they contain certain files
+        // Quite dodg but best workaround I can find for not having System.IO
+        Dictionary<string, bool> loadedMods = new Dictionary<string, bool>();
+
+        using (Process process = new Process())
+        {
+            string command = ""; // TODO figure this out
+
+            process.StartInfo.UseShellExecute = true;
+            process.StartInfo.FileName = "CMD.exe";
+            process.StartInfo.Arguments = command;
+            process.StartInfo.CreateNoWindow = true;
+            process.Start();
+
+            string line;
+            while ((line = process.StandardOutput.ReadLine()) != null)
+            {
+                string[] strings = line.Split('?');
+                string modPath = strings[0];
+                bool usesMF = bool.Parse(strings[1]);
+
+                ULogger.Log(cat, $"Found mod at {modPath}. Which {(usesMF == true ? "does" : "doesn\'t")} contain KCModdingFrameworkAPI");
+                loadedMods.Add(modPath, usesMF);
+            }
+
+            // Expects that process will terminate itself
+        }
+
+        return loadedMods;
+    }
+
+    /// <summary>
+    /// Run a given BAT command.
+    /// </summary>
+    /// <param name="command">The command to run.</param>
+    /// <returns>The output of the BAT script.</returns>
+    public string RunBatScript(string command)
+    {
+        StringBuilder commandOutput = new StringBuilder();
+
+        using (Process process = new Process())
+        {
+            command = ""; // TODO figure this out
+
+            process.StartInfo.UseShellExecute = true;
+            process.StartInfo.FileName = "CMD.exe";
+            process.StartInfo.Arguments = command;
+            process.StartInfo.CreateNoWindow = true;
+            process.Start();
+
+            string line;
+            while ((line = process.StandardOutput.ReadLine()) != null)
+            {
+                commandOutput.AppendLine(line);
+            }
+        }
+
+        return commandOutput.ToString();
     }
 }
 
