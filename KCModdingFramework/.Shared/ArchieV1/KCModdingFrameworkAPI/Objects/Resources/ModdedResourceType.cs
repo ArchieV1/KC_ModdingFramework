@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using KaC_Modding_Engine_API.Shared.ArchieV1.KCModdingFrameworkAPI.Objects.Resources;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using UnityEngine;
 using static KaC_Modding_Engine_API.Tools.Tools;
@@ -24,9 +25,25 @@ namespace KaC_Modding_Engine_API.Objects.Resources
         public GameObject Model { get; private set; }
 
         /// <summary>
-        /// The path of the AssetBundle
+        /// Gets the path of the AssetBundle
         /// </summary>
         public string AssetBundlePath { get; }
+
+        /// <summary>
+        /// Gets or sets hoSw many tiles away a Cave or Witch must be from this resource.
+        /// 0 means Witches and Caves can be placed next to this resource.
+        /// </summary>
+        // Stone/Iron is 2 tiles
+        // EmptyCave/Structure is 5 tiles
+        // TODO implement this 
+        public int CaveWitchMustBePlacedXTilesAway { get; set; } = 2;
+
+        /// <summary>
+        /// Gets or sets how many tiles with trees must surround the Resource for it to be placed within the given range.
+        /// </summary>
+        // Cave/Witch required 4 trees in a radius of 1. (4 of out 8)
+        // TODO implement this 
+        public TreeRequirement? NumberTreesRequiredNearby { get; set; } = null;
 
         /// <summary>
         /// The name of the Prefab

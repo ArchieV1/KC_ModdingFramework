@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Compile Include=".AnnotatedVanillaCode\WorldAnnotated.cs" />
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Exceptions\PlacementFailedException.cs" />
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Names\MethodNames.cs" />
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Names\ObjectNames.cs" />
@@ -18,13 +19,23 @@
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\ModConfig\ModConfigMF.cs" />
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\ModdedResourceType.cs" />
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\ResourceDestructionMethods.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\TreeRequirement.cs" />
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaModdedResourceTypes.cs" />
-      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResources.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResourceType.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResources\EmptyCaveModdedResourceType.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResources\IronDepositModdedResourceType.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResources\NoneModdedResourceType.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResources\StoneModdedResourceType.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResources\UnusableStoneModdedResourceType.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResources\WaterModdedResourceTypeBase.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResources\WitchHutModdedResourceType.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResources\WolfDenModdedResourceType.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResources\WoodModdedResourceType.cs" />
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Tools\JsonTools.cs" />
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Tools\LoggingTools.cs" />
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Tools\PrivateFieldTools.cs" />
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Tools\Tools.cs" />
-      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Tools\WorldTools.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Extension\WorldExtension.cs" />
       <Compile Include=".Shared\ArchieV1\ULogger\ULogger.cs" />
       <Compile Include=".Shared\Zat\Zat.Debugging.cs" />
       <Compile Include=".Shared\Zat\Zat.InterModComm.cs" />

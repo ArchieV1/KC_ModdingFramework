@@ -1,0 +1,18 @@
+﻿using KaC_Modding_Engine_API.Objects.Resources;
+using static KaC_Modding_Engine_API.Tools.PrivateFieldTools;
+
+namespace KaC_Modding_Engine_API.Shared.ArchieV1.KCModdingFrameworkAPI.Objects.Resources.VanillaResources
+{
+    public class WaterModdedResourceTypeBase : ModdedResourceType
+    {
+        public WaterModdedResourceTypeBase() : base() 
+        {
+            SetPrivateField(this, "DefaultResource", true);
+            SetPrivateField(this, "Name", "Water");
+            CaveWitchMustBePlacedXTilesAway = 0;
+            ResourceType = ResourceType.Water;
+            DoNotAssignResourceType = true;
+            Registered = true;
+        }
+    }
+}

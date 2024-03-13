@@ -2,7 +2,6 @@
 using KaC_Modding_Engine_API.Exceptions;
 using KaC_Modding_Engine_API.Objects.Resources;
 using KaC_Modding_Engine_API.Shared.ArchieV1;
-using Mono.Cecil;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -95,7 +94,7 @@ namespace KaC_Modding_Engine_API.Objects.Generators
             {
                 Debugging.Log($"Generation", $"Placing {resourceTypeBase} at {cell.x}, {cell.z}"); ;
                 cell.Type = resourceTypeBase.ResourceType;
-                GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(resourceTypeBase.Model);
+                GameObject gameObject = UnityEngine.Object.Instantiate(resourceTypeBase.Model);
 
                 if (storePostGenerationType) cell.StorePostGenerationType();
                 if (deleteTrees) TreeSystem.inst.DeleteTreesAt(cell);

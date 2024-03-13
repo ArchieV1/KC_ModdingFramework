@@ -2,7 +2,7 @@
 
 namespace KaC_Modding_Engine_API.Objects.Resources
 {
-    public static class VanillaResources
+    public static class VanillaResourceType
     {
         /// <summary>
         /// All of the possible default resources
