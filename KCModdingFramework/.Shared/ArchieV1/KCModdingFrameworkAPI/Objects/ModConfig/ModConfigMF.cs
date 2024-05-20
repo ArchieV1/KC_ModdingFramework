@@ -26,7 +26,7 @@ namespace KaC_Modding_Engine_API.Objects.ModConfig
         public string ModName { get; set; }
 
         /// <summary>
-        /// The author of the mod. Eg greenking2000.
+        /// The author of the mod. E.g. greenking2000.
         /// </summary>
         public string Author { get; set; }
 
@@ -42,7 +42,7 @@ namespace KaC_Modding_Engine_API.Objects.ModConfig
 
         /// <summary>
         /// Gets or sets the dependencies of this mod. Defined by the <see cref="ModName"/> of the mods.
-        /// Each dependency is lowercase and unique.
+        /// Each dependency is lower case and unique.
         /// </summary>
         public IEnumerable<string> Dependencies
         { 

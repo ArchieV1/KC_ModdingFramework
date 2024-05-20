@@ -41,7 +41,7 @@ namespace KaC_Modding_Engine_API.Translations
         {
             for (int x = 0; x < textArray.Length; x++)
             {
-                dict[ISO639.languagesISO639_3[x]] = textArray[x];
+                dict[ISO639.LanguagesISO639_3[x]] = textArray[x];
             }
         }
     }

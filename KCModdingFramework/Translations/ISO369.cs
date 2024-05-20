@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace KaC_Modding_Engine_API.Translations
 {
     public static class ISO639
     {
         // Private arrays for converting from any language code to language code `ISO 639-3`
-        public static readonly string[] languagesISO639_1 = new[]
+        public static List<string> LanguagesISO639_1 => new List<string>()
         {
         "en",
         "de",
@@ -31,7 +27,7 @@ namespace KaC_Modding_Engine_API.Translations
         "tr"
     };
 
-        public static readonly string[] languagesISO639_2_T = new[]
+        public static List<string> LanguagesISO639_2_T = new List<string>()
         {
         "eng",
         "deu",
@@ -53,7 +49,7 @@ namespace KaC_Modding_Engine_API.Translations
         "tur"
     };
 
-        public static readonly string[] languagesISO639_2_B = new[]
+        public static List<string> LanguagesISO639_2_B = new List<string>()
         {
         "eng",
         "ger",
@@ -78,7 +74,7 @@ namespace KaC_Modding_Engine_API.Translations
         /// <summary>
         /// This is the preferred ISO language code of this mod (See wiki on Chinese variation)
         /// </summary>
-        public static readonly string[] languagesISO639_3 = new[]
+        public static List<string> LanguagesISO639_3 = new List<string>()
         {
         "eng",
         "deu",
@@ -100,29 +96,21 @@ namespace KaC_Modding_Engine_API.Translations
         "tur"
     };
 
-        public static string[] GetLangArrayFromISO639(ISO639Code ISOCode)
+        public static List<string> GetLangArrayFromISO639(ISO639Code ISOCode)
         {
-            string[] langArray;
             switch (ISOCode)
             {
                 case ISO639Code.ISO639_1:
-                    langArray = ISO639.languagesISO639_1;
-                    break;
+                    return ISO639.LanguagesISO639_1;
                 case ISO639Code.ISO639_2_T:
-                    langArray = ISO639.languagesISO639_2_T;
-                    break;
+                    return ISO639.LanguagesISO639_2_T;
                 case ISO639Code.ISO639_2_B:
-                    langArray = ISO639.languagesISO639_2_B;
-                    break;
+                    return ISO639.LanguagesISO639_2_B;
                 case ISO639Code.ISO639_3:
-                    langArray = ISO639.languagesISO639_3;
-                    break;
+                    return ISO639.LanguagesISO639_3;
                 default:
-                    langArray = ISO639.languagesISO639_3;
-                    break;
+                    return ISO639.LanguagesISO639_3;
             }
-
-            return langArray;
         }
 
         /// <summary>
@@ -134,9 +122,9 @@ namespace KaC_Modding_Engine_API.Translations
         /// <returns></returns>
         public static string ConvertStandard(string str, ISO639Code codeFrom, ISO639Code codeTo = ISO639Code.ISO639_3)
         {
-            string[] fromArray = GetLangArrayFromISO639(codeFrom);
+            List<string> fromArray = GetLangArrayFromISO639(codeFrom);
 
-            for (int x = 0; x < fromArray.Length; x++)
+            for (int x = 0; x < fromArray.Count; x++)
             {
                 if (fromArray[x] == str)
                 {
