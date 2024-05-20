@@ -31,7 +31,7 @@
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResources\WitchHutModdedResourceType.cs" />
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResources\WolfDenModdedResourceType.cs" />
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Objects\Resources\VanillaResources\WoodModdedResourceType.cs" />
-      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Tools\JsonTools.cs" />
+      <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Tools\JsonExtensions.cs" />
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Tools\LoggingTools.cs" />
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Tools\PrivateFieldTools.cs" />
       <Compile Include=".Shared\ArchieV1\KCModdingFrameworkAPI\Tools\Tools.cs" />

@@ -3,10 +3,9 @@ using Zat.InterModComm;
 
 namespace KaC_Modding_Engine_API.Tools
 {
-    internal static class JsonTools
+    internal static class JsonExtensions
     {
-
-        public static object DecodeObject(string str, JsonSerializerSettings settings = null)
+        public static object Deserialise(this string str, JsonSerializerSettings settings = null)
         {
             if (settings == null)
             {
@@ -16,7 +15,7 @@ namespace KaC_Modding_Engine_API.Tools
             return JsonConvert.DeserializeObject(str, settings);
         }
 
-        public static string EncodeObject(object obj, JsonSerializerSettings settings = null)
+        public static string Serialise(this object obj, JsonSerializerSettings settings = null)
         {
             if (settings == null)
             {
@@ -26,13 +25,13 @@ namespace KaC_Modding_Engine_API.Tools
             return JsonConvert.SerializeObject(obj, settings);
         }
 
-        public static bool IsDecodable(string str)
+        public static bool IsDeserialisable(this string str)
         {
             if (str == null) return false;
 
             try
             {
-                DecodeObject(str);
+                Deserialise(str);
                 return true;
             }
             catch
@@ -41,7 +40,7 @@ namespace KaC_Modding_Engine_API.Tools
             }
         }
 
-        public static bool IsEncodable(object obj)
+        public static bool IsSerialiseable(this object obj)
         {
             try
             {
@@ -54,13 +53,13 @@ namespace KaC_Modding_Engine_API.Tools
             }
         }
 
-        public static bool IsJSONable(object obj)
+        public static bool IsJSONable(this object obj)
         {
             try
             {
                 // If Encode/Decode/Encode == Encode then it can be sent and received without issue
-                return EncodeObject(DecodeObject(EncodeObject(obj))) ==
-                       EncodeObject(obj);
+                return Serialise(Deserialise(Serialise(obj))) ==
+                       Serialise(obj);
             }
             catch
             {

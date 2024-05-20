@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using KaC_Modding_Engine_API.Shared.ArchieV1;
 using KaC_Modding_Engine_API.Objects.Generators;
-using KaC_Modding_Engine_API.Tools;
 using Newtonsoft.Json;
 using HarmonyLib;
 using Priority_Queue;
@@ -16,7 +15,6 @@ using Zat.InterModComm;
 using Zat.Debugging;
 using static KaC_Modding_Engine_API.Objects.Resources.VanillaModdedResourceTypes;
 using System.Diagnostics;
-using Crosstales.Common.Util;
 using System.Text;
 
 public class ModdingFramework : MonoBehaviour
@@ -288,7 +286,7 @@ public class ModdingFramework : MonoBehaviour
     {
         if (ModConfigMF == null)
         {
-            Helper.Log("ModConfigMF is null. ABORTING");
+            ULogger.Log("ModConfigMF is null. ABORTING");
             return;
         }
         
@@ -365,7 +363,7 @@ public class ModdingFramework : MonoBehaviour
     {
         ULogger.Log($"Registering ModdedResourceType: {moddedResourceType}");
 
-        // Not loaded earlier as breaks JSON encoding
+        // Not loaded earlier as can't be JSON encoded
         moddedResourceType.LoadModel();
         
         AssignModdedResourceType(ref moddedResourceType);
@@ -394,7 +392,7 @@ public class ModdingFramework : MonoBehaviour
     }
 
     /// <summary>
-    /// Removes ResourceType/ResourceTypeBase pair by resourceTypeBase from _assignedResourceTypes
+    /// Makes moddedResourceType unregistered.
     /// </summary>
     /// <param name="moddedResourceType"></param>
     private void UnassignModdedResourceType(ref ModdedResourceType moddedResourceType)
@@ -505,7 +503,7 @@ public class ModdingFramework : MonoBehaviour
 
             foreach (ModConfigMF modConfig in notAttemptedToLoad)
             {
-                // If mod has all dependencies loaded. Add to to current round of to load.
+                // If mod has all dependencies loaded. Add to current round of to load.
                 if (!HasUnloadedDependencies(modConfig, loaded))
                 {
                     loadRound.AddItem(modConfig);
@@ -576,7 +574,7 @@ public class ModdingFramework : MonoBehaviour
     public Dictionary<string, bool> GeneratePossibleModList()
     {
         // Checks if mods support KCModdingFramework by running CMD to check if they contain certain files
-        // Quite dodg but best workaround I can find for not having System.IO
+        // Quite dodgy but best workaround I can find for not having System.IO
         Dictionary<string, bool> loadedMods = new Dictionary<string, bool>();
 
         using (Process process = new Process())

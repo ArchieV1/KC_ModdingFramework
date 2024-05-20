@@ -21,10 +21,10 @@ namespace KaC_Modding_Engine_API.Translations
         public ToolTipText(Dictionary<string, string> languageTextDictionary, ISO639Code ISOCode = ISO639Code.ISO639_3)
         {
             // Set from whatever ISO639 code to ISO639-3
-            string[] langArray = ISO639.GetLangArrayFromISO639(ISOCode);
+            List<string> langArray = ISO639.GetLangArrayFromISO639(ISOCode);
             Dictionary<string, string> newDict = new Dictionary<string, string>();
 
-            foreach (var langCode in langArray)
+            foreach (string langCode in langArray)
             {
                 languageTextDictionary.TryGetValue(langCode, out string toolTip);
 

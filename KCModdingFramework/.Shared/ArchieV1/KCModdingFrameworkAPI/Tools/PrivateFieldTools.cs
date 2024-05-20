@@ -71,8 +71,8 @@ namespace KaC_Modding_Engine_API.Tools
         }
 
         /// <summary>
-        /// Sets a private field using reflection.
-        /// In normal programing this should not be used. When modding it is sometimes required though.
+        /// Sets the value of a private field using reflection.
+        /// In normal programming this should not be used. When modding it is sometimes required though.
         /// </summary>
         /// <param name="instance">The object containing the private field</param>
         /// <param name="fieldName">The name of the private field</param>

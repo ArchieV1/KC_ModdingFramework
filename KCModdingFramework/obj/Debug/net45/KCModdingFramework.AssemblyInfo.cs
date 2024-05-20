@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("KCModdingFramework")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7236eedf07d8f61e8cbeacf470c2ff235bd7b8e6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1f525e22fa20b1cb12a1f80f7fa28925dceaa896")]
 [assembly: System.Reflection.AssemblyProductAttribute("KCModdingFramework")]
 [assembly: System.Reflection.AssemblyTitleAttribute("KCModdingFramework")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

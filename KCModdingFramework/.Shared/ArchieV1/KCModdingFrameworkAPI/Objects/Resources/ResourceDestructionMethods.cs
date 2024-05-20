@@ -5,7 +5,13 @@
     /// </summary>
     public enum ResourceDestructionMethods
     {
+        /// <summary>
+        /// Remove trees.
+        /// </summary>
         AxeTool = 0,
-        RockDestroyed = 1,
+        /// <summary>
+        /// Remove stone tool.
+        /// </summary>
+        DestructionCrew = 1,
     }
 }

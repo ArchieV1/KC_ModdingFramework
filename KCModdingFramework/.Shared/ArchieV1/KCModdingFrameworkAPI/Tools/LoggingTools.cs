@@ -43,7 +43,7 @@ namespace KaC_Modding_Engine_API.Tools
         /// Gets calling methods as a string joined by delimiter.
         /// Does not include itself or any methods below it.
         /// </summary>
-        /// <param name="delimiter">The seperator for the method names.</param>
+        /// <param name="delimiter">The separator for the method names.</param>
         /// <returns>A string in format: string[delim]string[delim]</returns>
         public static string GetCallingMethodsAsString(string delimiter = ", ")
         {

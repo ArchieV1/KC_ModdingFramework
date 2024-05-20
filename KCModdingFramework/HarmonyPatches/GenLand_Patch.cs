@@ -23,7 +23,7 @@ namespace KaC_Modding_Engine_API.HarmonyPatches
             KCModHelper helper = ModdingFramework.Inst.Helper;
             if (helper == null) return;
 
-            helper.Log($"POSTFIXING \"GenLand\" with seed: {__instance.seed.ToString()}");
+            helper.Log($"POSTFIXING \"GenLand\" with seed: {__instance.seed}");
             helper.Log("Calling methods: " + LoggingTools.GetCallingMethodsAsString());
 
             if (ModdingFramework.Inst.RegisteredModConfigs == null) return;
